@@ -16,7 +16,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -46,7 +46,6 @@ fun ChatScreen(
     val isLoading by viewModel.isLoading.collectAsState()
     val listState = rememberLazyListState()
 
-    // নতুন মেসেজ আসলে নিচে স্ক্রল করা
     LaunchedEffect(messages.size) {
         if (messages.isNotEmpty()) {
             listState.animateScrollToItem(messages.size - 1)
@@ -85,8 +84,8 @@ fun ChatScreen(
                     }
                 }
                 
-                IconButton(onClick = {}) {
-                    Icon(Icons.Default.MoreVert, contentDescription = "Menu", tint = Color.White)
+                IconButton(onClick = { viewModel.clearHistory() }) {
+                    Icon(Icons.Default.Delete, contentDescription = "Clear History", tint = Color.Gray)
                 }
             }
 
