@@ -7,6 +7,7 @@ import androidx.navigation.compose.rememberNavController
 import com.luna.ai.feature.chat.ChatScreen
 import com.luna.ai.feature.home.HomeScreen
 import com.luna.ai.feature.settings.SettingsScreen
+import com.luna.ai.feature.tools.ToolsScreen
 import com.luna.ai.feature.voice.VoiceScreen
 
 @Composable
@@ -18,25 +19,21 @@ fun LunaNavGraph() {
             HomeScreen(
                 onChatClick = { navController.navigate(Screen.Chat.route) },
                 onVoiceClick = { navController.navigate(Screen.Voice.route) },
-                onSettingsClick = { navController.navigate(Screen.Settings.route) }
+                onSettingsClick = { navController.navigate(Screen.Settings.route) },
+                onToolsClick = { navController.navigate(Screen.Tools.route) }
             )
         }
         composable(Screen.Chat.route) {
-            ChatScreen(
-                onBackClick = { navController.popBackStack() }
-            )
+            ChatScreen(onBackClick = { navController.popBackStack() })
         }
         composable(Screen.Voice.route) {
-            VoiceScreen()
+            VoiceScreen(onBackClick = { navController.popBackStack() })
         }
         composable(Screen.Settings.route) {
-            SettingsScreen(
-                onBackClick = { navController.popBackStack() },
-                onSaveApiKey = { key ->
-                    // এখানে API Key সেভ করার লজিক পরে যোগ হবে
-                    navController.popBackStack()
-                }
-            )
+            SettingsScreen(onBackClick = { navController.popBackStack() })
+        }
+        composable(Screen.Tools.route) {
+            ToolsScreen(onBackClick = { navController.popBackStack() })
         }
     }
 }
