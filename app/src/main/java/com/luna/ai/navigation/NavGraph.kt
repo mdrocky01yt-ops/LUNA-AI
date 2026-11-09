@@ -6,7 +6,9 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.luna.ai.feature.chat.ChatScreen
 import com.luna.ai.feature.home.HomeScreen
+import com.luna.ai.feature.onboarding.OnboardingScreen
 import com.luna.ai.feature.settings.SettingsScreen
+import com.luna.ai.feature.splash.SplashScreen
 import com.luna.ai.feature.tools.ToolsScreen
 import com.luna.ai.feature.voice.VoiceScreen
 
@@ -14,7 +16,29 @@ import com.luna.ai.feature.voice.VoiceScreen
 fun LunaNavGraph() {
     val navController = rememberNavController()
 
-    NavHost(navController = navController, startDestination = Screen.Home.route) {
+    // startDestination এখন Splash
+    NavHost(navController = navController, startDestination = Screen.Splash.route) {
+        
+        composable(Screen.Splash.route) {
+            SplashScreen(
+                onTimeout = {
+                    navController.navigate(Screen.Onboarding.route) {
+                        popUpTo(Screen.Splash.route) { inclusive = true }
+                    }
+                }
+            )
+        }
+        
+        composable(Screen.Onboarding.route) {
+            OnboardingScreen(
+                onFinished = {
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(Screen.Onboarding.route) { inclusive = true }
+                    }
+                }
+            )
+        }
+
         composable(Screen.Home.route) {
             HomeScreen(
                 onChatClick = { navController.navigate(Screen.Chat.route) },
