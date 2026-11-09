@@ -17,15 +17,26 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import com.luna.ai.core.model.AIState
 import com.luna.ai.design.theme.CyanGlow
 import com.luna.ai.design.theme.ElectricPurple
 import com.luna.ai.design.theme.NeonViolet
 
 @Composable
-fun EnergyRing(modifier: Modifier = Modifier) {
+fun EnergyRing(
+    modifier: Modifier = Modifier,
+    aiState: AIState = AIState.IDLE
+) {
     val infiniteTransition = rememberInfiniteTransition(label = "ring")
     
-    // ঘোরার অ্যানিমেশন (Rotation)
+    // স্টেট অনুযায়ী রঙ নির্ধারণ
+    val ringColor = when (aiState) {
+        AIState.IDLE -> ElectricPurple
+        AIState.LISTENING -> CyanGlow
+        AIState.THINKING -> NeonViolet
+        AIState.SPEAKING -> Color(0xFF10B981)
+    }
+
     val rotation by infiniteTransition.animateFloat(
         initialValue = 0f,
         targetValue = 360f,
@@ -35,7 +46,6 @@ fun EnergyRing(modifier: Modifier = Modifier) {
         ), label = "rotation"
     )
 
-    // পালস অ্যানিমেশন (Pulse)
     val pulse by infiniteTransition.animateFloat(
         initialValue = 1f,
         targetValue = 1.05f,
@@ -50,13 +60,13 @@ fun EnergyRing(modifier: Modifier = Modifier) {
         val center = Offset(size.width / 2, size.height / 2)
         val radius = (canvasSize / 2) * 0.8f * pulse
 
-        // বাইরের গ্লোয়িং রিং
+        // গ্লোয়িং রিং
         drawCircle(
             brush = Brush.sweepGradient(
                 colors = listOf(
                     Color.Transparent,
-                    ElectricPurple,
-                    CyanGlow,
+                    ringColor,
+                    ringColor,
                     Color.Transparent
                 )
             ),
@@ -68,7 +78,7 @@ fun EnergyRing(modifier: Modifier = Modifier) {
         // ভেতরের হালকা রিং
         drawArc(
             brush = Brush.sweepGradient(
-                colors = listOf(NeonViolet, Color.Transparent)
+                colors = listOf(ringColor, Color.Transparent)
             ),
             startAngle = rotation,
             sweepAngle = 180f,
