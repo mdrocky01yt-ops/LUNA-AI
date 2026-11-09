@@ -12,19 +12,19 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -32,20 +32,25 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.luna.ai.core.model.Message
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.luna.ai.design.theme.DeepBlack
 import com.luna.ai.feature.chat.components.ChatBubble
 import com.luna.ai.feature.chat.components.ChatInput
 
 @Composable
 fun ChatScreen(
-    onBackClick: () -> Unit = {}
+    onBackClick: () -> Unit = {},
+    viewModel: ChatViewModel = hiltViewModel()
 ) {
-    val messages = remember { mutableStateListOf<Message>() }
+    val messages by viewModel.messages.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
+    val listState = rememberLazyListState()
 
-    // ডেমো মেসেজ (আপাতত)
-    if (messages.isEmpty()) {
-        messages.add(Message("1", "হ্যালো! আমি লুনা। আজ আমি আপনাকে কীভাবে সাহায্য করতে পারি?", false))
+    // নতুন মেসেজ আসলে নিচে স্ক্রল করা
+    LaunchedEffect(messages.size) {
+        if (messages.isNotEmpty()) {
+            listState.animateScrollToItem(messages.size - 1)
+        }
     }
 
     Box(
@@ -68,7 +73,6 @@ fun ChatScreen(
                         Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = Color.White)
                     }
                     
-                    // লুনা এআই-এর প্রোফাইল ছবি (ডেমো)
                     Box(
                         modifier = Modifier
                             .size(40.dp)
@@ -77,7 +81,7 @@ fun ChatScreen(
                     
                     Column(modifier = Modifier.padding(start = 12.dp)) {
                         Text(text = "Luna AI", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                        Text(text = "Online", color = Color(0xFF10B981), fontSize = 12.sp)
+                        Text(text = if (isLoading) "Typing..." else "Online", color = Color(0xFF10B981), fontSize = 12.sp)
                     }
                 }
                 
@@ -88,6 +92,7 @@ fun ChatScreen(
 
             // চ্যাট লিস্ট
             LazyColumn(
+                state = listState,
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxWidth(),
@@ -96,16 +101,28 @@ fun ChatScreen(
                 items(messages) { message ->
                     ChatBubble(message = message)
                 }
+                
+                if (isLoading) {
+                    item {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            contentAlignment = Alignment.CenterStart
+                        ) {
+                            CircularProgressIndicator(
+                                color = Color(0xFF22D3EE),
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                    }
+                }
             }
 
             // ইনপুট এরিয়া
             ChatInput(
                 onSendMessage = { text ->
-                    // ইউজারের মেসেজ যোগ করা
-                    messages.add(Message(System.currentTimeMillis().toString(), text, true))
-                    
-                    // ডেমো রিপ্লাই (এখানে পরে AI ইঞ্জিন যুক্ত হবে)
-                    messages.add(Message(System.currentTimeMillis().toString() + "1", "আমি বুঝতে পেরেছি। আমি এখনো ডেভেলপমেন্ট মোডে আছি, শীঘ্রই আমি সত্যিকারের উত্তর দিতে পারব!", false))
+                    viewModel.sendMessage(text)
                 }
             )
         }
