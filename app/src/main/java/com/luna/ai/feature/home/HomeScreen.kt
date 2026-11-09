@@ -44,7 +44,8 @@ import com.luna.ai.feature.home.components.VoiceButton
 fun HomeScreen(
     onChatClick: () -> Unit = {},
     onVoiceClick: () -> Unit = {},
-    onSettingsClick: () -> Unit = {}
+    onSettingsClick: () -> Unit = {},
+    onToolsClick: () -> Unit = {}
 ) {
     var currentState by remember { mutableStateOf(AIState.IDLE) }
 
@@ -80,8 +81,9 @@ fun HomeScreen(
 
                 LunaAvatar(aiState = currentState)
 
+                // Tools Button (এখন ক্লিক করলে টুলস পেজে যাবে)
                 Box(
-                    modifier = Modifier.size(50.dp).background(Color(0x33FFFFFF), CircleShape),
+                    modifier = Modifier.size(50.dp).background(Color(0x33FFFFFF), CircleShape).clickable { onToolsClick() },
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(Icons.Default.GridView, contentDescription = "Tools", tint = PremiumWhite)
