@@ -43,9 +43,9 @@ import com.luna.ai.feature.home.components.VoiceButton
 @Composable
 fun HomeScreen(
     onChatClick: () -> Unit = {},
-    onVoiceClick: () -> Unit = {}
+    onVoiceClick: () -> Unit = {},
+    onSettingsClick: () -> Unit = {}
 ) {
-    // অ্যাপের স্টেট ম্যানেজমেন্ট
     var currentState by remember { mutableStateOf(AIState.IDLE) }
 
     Box(
@@ -63,7 +63,7 @@ fun HomeScreen(
                 .padding(top = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            TopBar()
+            TopBar(onSettingsClick = onSettingsClick)
             Spacer(modifier = Modifier.weight(1f))
 
             Row(
@@ -78,7 +78,6 @@ fun HomeScreen(
                     Icon(Icons.Default.Chat, contentDescription = "Chat", tint = PremiumWhite)
                 }
 
-                // এভাটারে স্টেট পাস করা হলো
                 LunaAvatar(aiState = currentState)
 
                 Box(
@@ -91,7 +90,6 @@ fun HomeScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // ভয়েস বাটনে ক্লিক করলে স্টেট পরিবর্তন হবে
             Box(modifier = Modifier.clickable {
                 currentState = if (currentState == AIState.IDLE) AIState.LISTENING else AIState.IDLE
             }) {
@@ -114,7 +112,7 @@ fun HomeScreen(
 }
 
 @Composable
-fun TopBar() {
+fun TopBar(onSettingsClick: () -> Unit) {
     Row(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -125,7 +123,10 @@ fun TopBar() {
             Text(text = "Your Smart Companion", color = CyanGlow, fontSize = 12.sp)
         }
         Box(
-            modifier = Modifier.size(45.dp).background(ElectricPurple, shape = CircleShape),
+            modifier = Modifier
+                .size(45.dp)
+                .background(ElectricPurple, shape = CircleShape)
+                .clickable { onSettingsClick() },
             contentAlignment = Alignment.Center
         ) {
             Text(text = "U", color = PremiumWhite, fontWeight = FontWeight.Bold)
