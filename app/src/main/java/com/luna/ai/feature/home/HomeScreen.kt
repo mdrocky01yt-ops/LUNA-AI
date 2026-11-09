@@ -1,5 +1,8 @@
 package com.luna.ai.feature.home
 
+import android.content.Intent
+import android.net.Uri
+import android.provider.Settings
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -16,6 +19,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Chat
 import androidx.compose.material.icons.filled.GridView
+import androidx.compose.material.icons.filled.Widgets
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -27,6 +31,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -39,6 +44,7 @@ import com.luna.ai.feature.home.components.BottomNavBar
 import com.luna.ai.feature.home.components.LunaAvatar
 import com.luna.ai.feature.home.components.QuickToolsPanel
 import com.luna.ai.feature.home.components.VoiceButton
+import com.luna.ai.service.FloatingBubbleService
 
 @Composable
 fun HomeScreen(
@@ -47,6 +53,7 @@ fun HomeScreen(
     onSettingsClick: () -> Unit = {},
     onToolsClick: () -> Unit = {}
 ) {
+    val context = LocalContext.current
     var currentState by remember { mutableStateOf(AIState.IDLE) }
 
     Box(
@@ -64,7 +71,52 @@ fun HomeScreen(
                 .padding(top = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            TopBar(onSettingsClick = onSettingsClick)
+            // টপ বার (এখন বাম দিকে ফ্লোটিং বাবল আইকন যুক্ত হলো)
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text(text = "🌙 LUNA AI", color = PremiumWhite, fontSize = 24.sp, fontWeight = FontWeight.Bold)
+                    Text(text = "Your Smart Companion", color = CyanGlow, fontSize = 12.sp)
+                }
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    // ফ্লোটিং বাবল চালু করার বাটন
+                    Box(
+                        modifier = Modifier
+                            .padding(end = 12.dp)
+                            .size(40.dp)
+                            .background(Color(0x33FFFFFF), CircleShape)
+                            .clickable {
+                                if (Settings.canDrawOverlays(context)) {
+                                    context.startService(Intent(context, FloatingBubbleService::class.java))
+                                } else {
+                                    val intent = Intent(
+                                        Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                                        Uri.parse("package:${context.packageName}")
+                                    )
+                                    context.startActivity(intent)
+                                }
+                            },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(Icons.Default.Widgets, contentDescription = "Bubble", tint = CyanGlow)
+                    }
+                    
+                    // সেটিংস বাটন
+                    Box(
+                        modifier = Modifier
+                            .size(45.dp)
+                            .background(ElectricPurple, shape = CircleShape)
+                            .clickable { onSettingsClick() },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(text = "U", color = PremiumWhite, fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+
             Spacer(modifier = Modifier.weight(1f))
 
             Row(
@@ -81,7 +133,6 @@ fun HomeScreen(
 
                 LunaAvatar(aiState = currentState)
 
-                // Tools Button (এখন ক্লিক করলে টুলস পেজে যাবে)
                 Box(
                     modifier = Modifier.size(50.dp).background(Color(0x33FFFFFF), CircleShape).clickable { onToolsClick() },
                     contentAlignment = Alignment.Center
@@ -109,29 +160,6 @@ fun HomeScreen(
 
             QuickToolsPanel()
             BottomNavBar()
-        }
-    }
-}
-
-@Composable
-fun TopBar(onSettingsClick: () -> Unit) {
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Column {
-            Text(text = "🌙 LUNA AI", color = PremiumWhite, fontSize = 24.sp, fontWeight = FontWeight.Bold)
-            Text(text = "Your Smart Companion", color = CyanGlow, fontSize = 12.sp)
-        }
-        Box(
-            modifier = Modifier
-                .size(45.dp)
-                .background(ElectricPurple, shape = CircleShape)
-                .clickable { onSettingsClick() },
-            contentAlignment = Alignment.Center
-        ) {
-            Text(text = "U", color = PremiumWhite, fontWeight = FontWeight.Bold)
         }
     }
 }
