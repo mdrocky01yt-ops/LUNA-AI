@@ -20,7 +20,9 @@ fun LunaNavGraph() {
             )
         }
         composable(Screen.Chat.route) {
-            ChatScreen()
+            ChatScreen(
+                onBackClick = { navController.popBackStack() }
+            )
         }
         composable(Screen.Voice.route) {
             VoiceScreen()
