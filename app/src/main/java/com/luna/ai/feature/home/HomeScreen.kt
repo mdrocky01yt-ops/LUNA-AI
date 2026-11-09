@@ -1,6 +1,7 @@
 package com.luna.ai.feature.home
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -35,7 +36,10 @@ import com.luna.ai.feature.home.components.QuickToolsPanel
 import com.luna.ai.feature.home.components.VoiceButton
 
 @Composable
-fun HomeScreen() {
+fun HomeScreen(
+    onChatClick: () -> Unit = {},
+    onVoiceClick: () -> Unit = {}
+) {
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -54,15 +58,17 @@ fun HomeScreen() {
             TopBar()
             Spacer(modifier = Modifier.weight(1f))
 
-            // এভাটার এবং পাশের বাটন
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Chat Button (Left)
+                // Chat Button
                 Box(
-                    modifier = Modifier.size(50.dp).background(Color(0x33FFFFFF), CircleShape),
+                    modifier = Modifier
+                        .size(50.dp)
+                        .background(Color(0x33FFFFFF), CircleShape)
+                        .clickable { onChatClick() },
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(Icons.Default.Chat, contentDescription = "Chat", tint = PremiumWhite)
@@ -70,7 +76,7 @@ fun HomeScreen() {
 
                 LunaAvatar()
 
-                // Tools Button (Right)
+                // Tools Button (পরে কাজ করব)
                 Box(
                     modifier = Modifier.size(50.dp).background(Color(0x33FFFFFF), CircleShape),
                     contentAlignment = Alignment.Center
@@ -81,16 +87,17 @@ fun HomeScreen() {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            VoiceButton()
+            // Voice Button Clicked
+            Box(modifier = Modifier.clickable { onVoiceClick() }) {
+                VoiceButton()
+            }
+            
             Spacer(modifier = Modifier.height(8.dp))
             Text(text = "Listening...", color = CyanGlow, fontSize = 14.sp)
 
             Spacer(modifier = Modifier.weight(1f))
 
-            // কুইক টুলস প্যানেল (Apps, YouTube, Tasks, More)
             QuickToolsPanel()
-
-            // বটম নেভিগেশন বার
             BottomNavBar()
         }
     }
