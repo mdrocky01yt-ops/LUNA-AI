@@ -4,7 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import com.luna.ai.design.theme.LunaAITheme
-import com.luna.ai.feature.home.HomeScreen
+import com.luna.ai.navigation.LunaNavGraph
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -13,8 +13,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             LunaAITheme {
-                // এখন অ্যাপ ওপেন হলে সরাসরি হোম স্ক্রিন দেখাবে
-                HomeScreen()
+                LunaNavGraph()
             }
         }
     }
