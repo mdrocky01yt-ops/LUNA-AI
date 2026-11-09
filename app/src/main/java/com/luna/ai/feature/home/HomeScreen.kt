@@ -19,6 +19,10 @@ import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -26,6 +30,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.luna.ai.core.model.AIState
 import com.luna.ai.design.theme.CyanGlow
 import com.luna.ai.design.theme.DeepBlack
 import com.luna.ai.design.theme.ElectricPurple
@@ -40,6 +45,9 @@ fun HomeScreen(
     onChatClick: () -> Unit = {},
     onVoiceClick: () -> Unit = {}
 ) {
+    // অ্যাপের স্টেট ম্যানেজমেন্ট
+    var currentState by remember { mutableStateOf(AIState.IDLE) }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -63,20 +71,16 @@ fun HomeScreen(
                 horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Chat Button
                 Box(
-                    modifier = Modifier
-                        .size(50.dp)
-                        .background(Color(0x33FFFFFF), CircleShape)
-                        .clickable { onChatClick() },
+                    modifier = Modifier.size(50.dp).background(Color(0x33FFFFFF), CircleShape).clickable { onChatClick() },
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(Icons.Default.Chat, contentDescription = "Chat", tint = PremiumWhite)
                 }
 
-                LunaAvatar()
+                // এভাটারে স্টেট পাস করা হলো
+                LunaAvatar(aiState = currentState)
 
-                // Tools Button (পরে কাজ করব)
                 Box(
                     modifier = Modifier.size(50.dp).background(Color(0x33FFFFFF), CircleShape),
                     contentAlignment = Alignment.Center
@@ -87,13 +91,19 @@ fun HomeScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Voice Button Clicked
-            Box(modifier = Modifier.clickable { onVoiceClick() }) {
+            // ভয়েস বাটনে ক্লিক করলে স্টেট পরিবর্তন হবে
+            Box(modifier = Modifier.clickable {
+                currentState = if (currentState == AIState.IDLE) AIState.LISTENING else AIState.IDLE
+            }) {
                 VoiceButton()
             }
             
             Spacer(modifier = Modifier.height(8.dp))
-            Text(text = "Listening...", color = CyanGlow, fontSize = 14.sp)
+            Text(
+                text = if (currentState == AIState.IDLE) "Tap to Speak" else "Listening...",
+                color = CyanGlow,
+                fontSize = 14.sp
+            )
 
             Spacer(modifier = Modifier.weight(1f))
 
