@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Room
 import com.luna.ai.core.database.ChatDao
 import com.luna.ai.core.database.LunaDatabase
+import com.luna.ai.core.database.TaskDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -28,5 +29,10 @@ object DatabaseModule {
     @Provides
     fun provideChatDao(database: LunaDatabase): ChatDao {
         return database.chatDao()
+    }
+
+    @Provides
+    fun provideTaskDao(database: LunaDatabase): TaskDao {
+        return database.taskDao()
     }
 }
