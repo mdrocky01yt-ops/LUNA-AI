@@ -8,3 +8,8 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# Gradle Wrapper ফাইলগুলো যেন ইগনোর না হয়
+!gradle/wrapper/gradle-wrapper.jar
+!gradlew
+!gradlew.bat
