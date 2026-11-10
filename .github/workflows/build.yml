@@ -27,9 +27,12 @@ jobs:
       with:
         gradle-version: '8.7'
 
-    # এখানে আর gradlew ব্যবহার করা হচ্ছে না, সরাসরি gradle দিয়ে বিল্ড হবে
-    - name: Build Debug APK
-      run: gradle assembleDebug 
+    # গিটহাব নিজেই Wrapper তৈরি করবে এবং বিল্ড করবে
+    - name: Build with Gradle
+      run: |
+        gradle wrapper
+        chmod +x gradlew
+        ./gradlew assembleDebug
 
     - name: Upload APK Artifact
       uses: actions/upload-artifact@v4
