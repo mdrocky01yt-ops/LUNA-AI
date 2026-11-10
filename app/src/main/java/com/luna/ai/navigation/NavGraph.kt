@@ -9,6 +9,7 @@ import com.luna.ai.feature.home.HomeScreen
 import com.luna.ai.feature.onboarding.OnboardingScreen
 import com.luna.ai.feature.settings.SettingsScreen
 import com.luna.ai.feature.splash.SplashScreen
+import com.luna.ai.feature.tasks.TaskScreen
 import com.luna.ai.feature.tools.ToolsScreen
 import com.luna.ai.feature.voice.VoiceScreen
 
@@ -16,27 +17,14 @@ import com.luna.ai.feature.voice.VoiceScreen
 fun LunaNavGraph() {
     val navController = rememberNavController()
 
-    // startDestination এখন Splash
     NavHost(navController = navController, startDestination = Screen.Splash.route) {
         
         composable(Screen.Splash.route) {
-            SplashScreen(
-                onTimeout = {
-                    navController.navigate(Screen.Onboarding.route) {
-                        popUpTo(Screen.Splash.route) { inclusive = true }
-                    }
-                }
-            )
+            SplashScreen(onTimeout = { navController.navigate(Screen.Onboarding.route) { popUpTo(Screen.Splash.route) { inclusive = true } } })
         }
         
         composable(Screen.Onboarding.route) {
-            OnboardingScreen(
-                onFinished = {
-                    navController.navigate(Screen.Home.route) {
-                        popUpTo(Screen.Onboarding.route) { inclusive = true }
-                    }
-                }
-            )
+            OnboardingScreen(onFinished = { navController.navigate(Screen.Home.route) { popUpTo(Screen.Onboarding.route) { inclusive = true } } })
         }
 
         composable(Screen.Home.route) {
@@ -47,17 +35,12 @@ fun LunaNavGraph() {
                 onToolsClick = { navController.navigate(Screen.Tools.route) }
             )
         }
-        composable(Screen.Chat.route) {
-            ChatScreen(onBackClick = { navController.popBackStack() })
-        }
-        composable(Screen.Voice.route) {
-            VoiceScreen(onBackClick = { navController.popBackStack() })
-        }
-        composable(Screen.Settings.route) {
-            SettingsScreen(onBackClick = { navController.popBackStack() })
-        }
-        composable(Screen.Tools.route) {
-            ToolsScreen(onBackClick = { navController.popBackStack() })
-        }
+        composable(Screen.Chat.route) { ChatScreen(onBackClick = { navController.popBackStack() }) }
+        composable(Screen.Voice.route) { VoiceScreen(onBackClick = { navController.popBackStack() }) }
+        composable(Screen.Settings.route) { SettingsScreen(onBackClick = { navController.popBackStack() }) }
+        composable(Screen.Tools.route) { ToolsScreen(onBackClick = { navController.popBackStack() }) }
+        
+        // নতুন Task Screen যুক্ত করা হলো
+        composable("tasks") { TaskScreen(onBackClick = { navController.popBackStack() }) }
     }
 }
