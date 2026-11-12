@@ -54,7 +54,7 @@ fun HomeScreen(
     onVoiceClick: () -> Unit = {},
     onSettingsClick: () -> Unit = {},
     onToolsClick: () -> Unit = {},
-    onTasksClick: () -> Unit = {} // নতুন প্যারামিটার
+    onTasksClick: () -> Unit = {} // নতুন প্যারামিটার যুক্ত হলো
 ) {
     val context = LocalContext.current
     var currentState by remember { mutableStateOf(AIState.IDLE) }
