@@ -53,7 +53,7 @@ fun QuickToolsPanel(
 }
 
 @Composable
-fun ToolItem(icon: ImageVector, label: String, color: Color, onClick: () -> Unit = {}) {
+fun ToolItem(icon: ImageVector, label: String, color: Color, onClick: () -> Unit) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier.clickable { onClick() }
