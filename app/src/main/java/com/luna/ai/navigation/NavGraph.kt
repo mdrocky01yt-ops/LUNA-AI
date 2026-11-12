@@ -32,15 +32,14 @@ fun LunaNavGraph() {
                 onChatClick = { navController.navigate(Screen.Chat.route) },
                 onVoiceClick = { navController.navigate(Screen.Voice.route) },
                 onSettingsClick = { navController.navigate(Screen.Settings.route) },
-                onToolsClick = { navController.navigate(Screen.Tools.route) }
+                onToolsClick = { navController.navigate(Screen.Tools.route) },
+                onTasksClick = { navController.navigate(Screen.Tasks.route) } // টাস্ক স্ক্রিনে যাওয়ার লিংক
             )
         }
         composable(Screen.Chat.route) { ChatScreen(onBackClick = { navController.popBackStack() }) }
         composable(Screen.Voice.route) { VoiceScreen(onBackClick = { navController.popBackStack() }) }
         composable(Screen.Settings.route) { SettingsScreen(onBackClick = { navController.popBackStack() }) }
         composable(Screen.Tools.route) { ToolsScreen(onBackClick = { navController.popBackStack() }) }
-        
-        // নতুন Task Screen যুক্ত করা হলো
-        composable("tasks") { TaskScreen(onBackClick = { navController.popBackStack() }) }
+        composable(Screen.Tasks.route) { TaskScreen(onBackClick = { navController.popBackStack() }) }
     }
 }
