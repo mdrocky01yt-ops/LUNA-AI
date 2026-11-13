@@ -1,0 +1,21 @@
+package com.luna.ai.core.database
+
+import androidx.room.Dao
+import androidx.room.Delete
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
+import androidx.room.Query
+import com.luna.ai.core.model.MemoryEntity
+import kotlinx.coroutines.flow.Flow
+
+@Dao
+interface MemoryDao {
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertMemory(memory: MemoryEntity)
+
+    @Delete
+    suspend fun deleteMemory(memory: MemoryEntity)
+
+    @Query("SELECT * FROM memories ORDER BY timestamp DESC")
+    fun getAllMemories(): Flow<List<MemoryEntity>>
+}
