@@ -13,6 +13,7 @@ import com.luna.ai.feature.menu.MenuScreen
 import com.luna.ai.feature.onboarding.OnboardingScreen
 import com.luna.ai.feature.placeholder.PlaceholderScreen
 import com.luna.ai.feature.settings.SettingsScreen
+import com.luna.ai.feature.silent.SilentScreen
 import com.luna.ai.feature.splash.SplashScreen
 import com.luna.ai.feature.tasks.TaskScreen
 import com.luna.ai.feature.tools.ToolsScreen
@@ -59,14 +60,14 @@ fun LunaNavGraph() {
         composable(Screen.ApiKeys.route) { ApiKeysScreen(onBackClick = { navController.popBackStack() }) }
         composable(Screen.VoiceChanger.route) { VoiceChangerScreen(onBackClick = { navController.popBackStack() }) }
         composable(Screen.Headlines.route) { HeadlinesScreen(onBackClick = { navController.popBackStack() }) }
+        composable(Screen.Memory.route) { MemoryScreen(onBackClick = { navController.popBackStack() }) }
 
-        // নতুন মেমোরি স্ক্রিন
-        composable(Screen.Memory.route) { 
-            MemoryScreen(onBackClick = { navController.popBackStack() }) 
+        // নতুন সাইলেন্ট মোড স্ক্রিন
+        composable(Screen.Silent.route) { 
+            SilentScreen(onBackClick = { navController.popBackStack() }) 
         }
 
         // বাকি ফাঁকা স্ক্রিনগুলো
-        composable(Screen.Silent.route) { PlaceholderScreen("Silent Mode") }
         composable(Screen.Device.route) { PlaceholderScreen("Device Control") }
         composable(Screen.Soul.route) { PlaceholderScreen("Soul") }
         composable(Screen.Customize.route) { PlaceholderScreen("Customize") }
