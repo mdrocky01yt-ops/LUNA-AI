@@ -60,7 +60,8 @@ class VoiceViewModel @Inject constructor(
         apiHistory.add(ChatMessage("user", text))
 
         viewModelScope.launch {
-            val result = repository.sendMessage(apiHistory)
+            // এখানে ফাংশনের নাম আপডেট করা হলো
+            val result = repository.sendDeepSeekMessage(apiHistory)
             
             result.onSuccess { reply ->
                 _lunaResponse.value = reply
