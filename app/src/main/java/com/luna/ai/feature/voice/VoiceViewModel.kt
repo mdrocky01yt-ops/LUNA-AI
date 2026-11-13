@@ -5,12 +5,14 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.luna.ai.ai.model.ChatMessage
 import com.luna.ai.ai.repository.AiRepository
+import com.luna.ai.core.datastore.DataStoreManager
 import com.luna.ai.core.device.ActionParser
 import com.luna.ai.core.utils.PromptHelper
 import com.luna.ai.voice.VoiceManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -18,7 +20,8 @@ import javax.inject.Inject
 class VoiceViewModel @Inject constructor(
     application: Application,
     private val repository: AiRepository,
-    private val actionParser: ActionParser // নতুন যুক্ত হলো
+    private val actionParser: ActionParser,
+    private val dataStoreManager: DataStoreManager
 ) : AndroidViewModel(application) {
 
     private val voiceManager = VoiceManager(application)
@@ -33,8 +36,17 @@ class VoiceViewModel @Inject constructor(
     val lunaResponse: StateFlow<String> = _lunaResponse
 
     private val apiHistory = mutableListOf(
-        ChatMessage("system", PromptHelper.getSystemPrompt()) // এআই-কে অ্যাকশন শেখানো হলো
+        ChatMessage("system", PromptHelper.getSystemPrompt())
     )
+
+    init {
+        // সেভ করা ভয়েস সেটিংস লোড করা
+        viewModelScope.launch {
+            val pitch = dataStoreManager.voicePitchFlow.first()
+            val speed = dataStoreManager.voiceSpeedFlow.first()
+            voiceManager.updateVoiceParameters(pitch, speed)
+        }
+    }
 
     fun startListening() {
         voiceManager.stopSpeaking()
@@ -67,20 +79,14 @@ class VoiceViewModel @Inject constructor(
             
             result.onSuccess { reply ->
                 var finalReply = reply
-
-                // অ্যাকশন চেক করা
                 if (reply.contains("ACTION:")) {
                     val actionExecuted = actionParser.executeAction(reply)
-                    finalReply = if (actionExecuted) {
-                        "ঠিক আছে, কাজটি করে দিয়েছি।"
-                    } else {
-                        "দুঃখিত, কাজটি করা সম্ভব হয়নি।"
-                    }
+                    finalReply = if (actionExecuted) "ঠিক আছে, কাজটি করে দিয়েছি।" else "দুঃখিত, কাজটি করা সম্ভব হয়নি।"
                 }
 
                 _lunaResponse.value = finalReply
                 apiHistory.add(ChatMessage("assistant", reply))
-                voiceManager.speak(finalReply) // ভয়েসে কনফার্মেশন শোনাবে
+                voiceManager.speak(finalReply)
                 
             }.onFailure { error ->
                 _lunaResponse.value = "Error: ${error.message}"
