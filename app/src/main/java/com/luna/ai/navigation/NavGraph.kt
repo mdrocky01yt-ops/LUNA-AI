@@ -27,11 +27,28 @@ fun LunaNavGraph() {
     NavHost(navController = navController, startDestination = Screen.Splash.route) {
         
         composable(Screen.Splash.route) {
-            SplashScreen(onTimeout = { navController.navigate(Screen.Onboarding.route) { popUpTo(Screen.Splash.route) { inclusive = true } } })
+            SplashScreen(
+                onNavigateToOnboarding = {
+                    navController.navigate(Screen.Onboarding.route) {
+                        popUpTo(Screen.Splash.route) { inclusive = true }
+                    }
+                },
+                onNavigateToHome = {
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(Screen.Splash.route) { inclusive = true }
+                    }
+                }
+            )
         }
         
         composable(Screen.Onboarding.route) {
-            OnboardingScreen(onFinished = { navController.navigate(Screen.Home.route) { popUpTo(Screen.Onboarding.route) { inclusive = true } } })
+            OnboardingScreen(
+                onFinished = {
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(Screen.Onboarding.route) { inclusive = true }
+                    }
+                }
+            )
         }
 
         composable(Screen.Home.route) {
@@ -61,11 +78,7 @@ fun LunaNavGraph() {
         composable(Screen.VoiceChanger.route) { VoiceChangerScreen(onBackClick = { navController.popBackStack() }) }
         composable(Screen.Headlines.route) { HeadlinesScreen(onBackClick = { navController.popBackStack() }) }
         composable(Screen.Memory.route) { MemoryScreen(onBackClick = { navController.popBackStack() }) }
-
-        // নতুন সাইলেন্ট মোড স্ক্রিন
-        composable(Screen.Silent.route) { 
-            SilentScreen(onBackClick = { navController.popBackStack() }) 
-        }
+        composable(Screen.Silent.route) { SilentScreen(onBackClick = { navController.popBackStack() }) }
 
         // বাকি ফাঁকা স্ক্রিনগুলো
         composable(Screen.Device.route) { PlaceholderScreen("Device Control") }
