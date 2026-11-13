@@ -7,7 +7,6 @@ import com.luna.ai.ai.model.ChatMessage
 import com.luna.ai.ai.repository.AiRepository
 import com.luna.ai.core.datastore.DataStoreManager
 import com.luna.ai.core.device.ActionParser
-import com.luna.ai.core.utils.PromptHelper
 import com.luna.ai.voice.VoiceManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -35,16 +34,19 @@ class VoiceViewModel @Inject constructor(
     private val _lunaResponse = MutableStateFlow("Tap the mic to start speaking...")
     val lunaResponse: StateFlow<String> = _lunaResponse
 
-    private val apiHistory = mutableListOf(
-        ChatMessage("system", PromptHelper.getSystemPrompt())
-    )
+    private val apiHistory = mutableListOf<ChatMessage>()
 
     init {
-        // সেভ করা ভয়েস সেটিংস লোড করা
         viewModelScope.launch {
+            // ভয়েস সেটিংস লোড
             val pitch = dataStoreManager.voicePitchFlow.first()
             val speed = dataStoreManager.voiceSpeedFlow.first()
             voiceManager.updateVoiceParameters(pitch, speed)
+
+            // পার্সোনালিটি লোড
+            val personality = dataStoreManager.aiPersonalityFlow.first()
+            val systemPrompt = "$personality\n\nIMPORTANT: Keep your answers short and conversational. You can control the Android phone.\nIf user asks to do something on phone, reply EXACTLY like: ACTION:OPEN_APP:package.name OR ACTION:FLASHLIGHT OR ACTION:VOLUME_UP OR ACTION:VOLUME_DOWN"
+            apiHistory.add(ChatMessage("system", systemPrompt))
         }
     }
 
@@ -79,6 +81,7 @@ class VoiceViewModel @Inject constructor(
             
             result.onSuccess { reply ->
                 var finalReply = reply
+
                 if (reply.contains("ACTION:")) {
                     val actionExecuted = actionParser.executeAction(reply)
                     finalReply = if (actionExecuted) "ঠিক আছে, কাজটি করে দিয়েছি।" else "দুঃখিত, কাজটি করা সম্ভব হয়নি।"
