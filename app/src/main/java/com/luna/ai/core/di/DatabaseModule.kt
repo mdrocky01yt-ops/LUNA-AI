@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Room
 import com.luna.ai.core.database.ChatDao
 import com.luna.ai.core.database.LunaDatabase
+import com.luna.ai.core.database.MemoryDao
 import com.luna.ai.core.database.TaskDao
 import dagger.Module
 import dagger.Provides
@@ -34,5 +35,10 @@ object DatabaseModule {
     @Provides
     fun provideTaskDao(database: LunaDatabase): TaskDao {
         return database.taskDao()
+    }
+
+    @Provides
+    fun provideMemoryDao(database: LunaDatabase): MemoryDao {
+        return database.memoryDao()
     }
 }
