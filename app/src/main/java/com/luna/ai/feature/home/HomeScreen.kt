@@ -19,6 +19,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Chat
 import androidx.compose.material.icons.filled.GridView
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Widgets
 import androidx.compose.material.icons.filled.WorkspacePremium
@@ -54,7 +55,8 @@ fun HomeScreen(
     onVoiceClick: () -> Unit = {},
     onSettingsClick: () -> Unit = {},
     onToolsClick: () -> Unit = {},
-    onTasksClick: () -> Unit = {} // নতুন প্যারামিটার যুক্ত হলো
+    onTasksClick: () -> Unit = {},
+    onMenuClick: () -> Unit = {} // নতুন প্যারামিটার
 ) {
     val context = LocalContext.current
     var currentState by remember { mutableStateOf(AIState.IDLE) }
@@ -70,16 +72,24 @@ fun HomeScreen(
         ) {
             // টপ বার
             Row(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column {
+                // বাম দিকে মেনু বাটন
+                Icon(
+                    imageVector = Icons.Default.Menu,
+                    contentDescription = "Menu",
+                    tint = PremiumWhite,
+                    modifier = Modifier.size(28.dp).clickable { onMenuClick() }
+                )
+
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(text = "🌙", fontSize = 20.sp)
                         Text(text = " LUNA AI", color = PremiumWhite, fontSize = 22.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
                     }
-                    Text(text = "Your Smart Companion", color = CyanGlow, fontSize = 10.sp, modifier = Modifier.padding(start = 4.dp))
+                    Text(text = "Your Smart Companion", color = CyanGlow, fontSize = 10.sp, modifier = Modifier.padding(top = 2.dp))
                 }
                 
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -132,7 +142,6 @@ fun HomeScreen(
 
             Spacer(modifier = Modifier.weight(1f))
 
-            // কুইক টুলসে টাস্ক ক্লিক লিসেনার যুক্ত করা হলো
             QuickToolsPanel(onTasksClick = onTasksClick)
             BottomNavBar()
         }
