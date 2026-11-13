@@ -6,14 +6,17 @@ import android.hardware.camera2.CameraManager
 import android.media.AudioManager
 import android.os.BatteryManager
 import android.widget.Toast
-import androidx.core.content.ContextCompat
+import dagger.hilt.android.qualifiers.ApplicationContext
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class DeviceController(private val context: Context) {
-
+@Singleton
+class DeviceController @Inject constructor(
+    @ApplicationContext private val context: Context
+) {
     private val cameraManager = context.getSystemService(Context.CAMERA_SERVICE) as CameraManager
     private var isFlashOn = false
 
-    // ১. টর্চ অন/অফ করা
     fun toggleFlashlight() {
         try {
             val cameraId = cameraManager.cameraIdList[0]
@@ -25,13 +28,11 @@ class DeviceController(private val context: Context) {
         }
     }
 
-    // ২. ব্যাটারি পার্সেন্টেজ
     fun getBatteryLevel(): Int {
         val batteryManager = context.getSystemService(Context.BATTERY_SERVICE) as BatteryManager
         return batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY)
     }
 
-    // ৩. ভলিউম বাড়ানো/কমানো
     fun changeVolume(increase: Boolean) {
         val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
         val direction = if (increase) AudioManager.ADJUST_RAISE else AudioManager.ADJUST_LOWER
@@ -39,7 +40,6 @@ class DeviceController(private val context: Context) {
         showToast(if (increase) "Volume Up" else "Volume Down")
     }
 
-    // ৪. অ্যাপ ওপেন করা
     fun openApp(packageName: String): Boolean {
         val intent = context.packageManager.getLaunchIntentForPackage(packageName)
         return if (intent != null) {
@@ -50,14 +50,6 @@ class DeviceController(private val context: Context) {
             showToast("App not found on this phone.")
             false
         }
-    }
-
-    // ৫. ইনস্টল করা অ্যাপের লিস্ট বের করা
-    fun getInstalledApps(): List<String> {
-        val pm = context.packageManager
-        val apps = pm.getInstalledApplications(0)
-        return apps.filter { pm.getLaunchIntentForPackage(it.packageName) != null }
-            .map { it.packageName }
     }
 
     fun showToast(message: String) {
