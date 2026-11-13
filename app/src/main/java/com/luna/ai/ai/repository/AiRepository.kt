@@ -15,9 +15,10 @@ class AiRepository @Inject constructor(
 ) {
     suspend fun sendMessage(history: List<ChatMessage>): Result<String> {
         return try {
-            val apiKey = dataStoreManager.apiKeyFlow.first()
+            // এখন আপাতত প্রথম Key-টা নিচ্ছি (পরের ধাপে অটো-সুইচ করব)
+            val apiKey = dataStoreManager.deepSeekKeysFlow.first().firstOrNull() ?: ""
             if (apiKey.isBlank()) {
-                return Result.failure(Exception("API Key সেট করা হয়নি। দয়া করে Settings-এ গিয়ে Key বসান।"))
+                return Result.failure(Exception("API Key সেট করা হয়নি। দয়া করে Menu -> API KEYS-এ গিয়ে Key বসান।"))
             }
 
             val request = DeepSeekRequest(messages = history)
