@@ -1,6 +1,7 @@
 package com.luna.ai.core.datastore
 
 import android.content.Context
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
@@ -23,14 +24,28 @@ class DataStoreManager @Inject constructor(
         val DEEPSEEK_KEYS = stringPreferencesKey("deepseek_keys")
         val GEMINI_KEYS = stringPreferencesKey("gemini_keys")
         
-        // ভয়েস সেটিংস
         val VOICE_NAME = stringPreferencesKey("voice_name")
         val VOICE_PITCH = floatPreferencesKey("voice_pitch")
         val VOICE_SPEED = floatPreferencesKey("voice_speed")
+
+        // নতুন যুক্ত হলো: ইউজার প্রথমবার অ্যাপ ওপেন করেছে কিনা
+        val IS_FIRST_LAUNCH = booleanPreferencesKey("is_first_launch")
     }
 
     private val gson = Gson()
 
+    // প্রথমবার লঞ্চ চেক
+    val isFirstLaunchFlow: Flow<Boolean> = context.dataStore.data.map { prefs ->
+        prefs[IS_FIRST_LAUNCH] ?: true
+    }
+
+    suspend fun setFirstLaunchCompleted() {
+        context.dataStore.edit { prefs ->
+            prefs[IS_FIRST_LAUNCH] = false
+        }
+    }
+
+    // API Keys
     val deepSeekKeysFlow: Flow<List<String>> = context.dataStore.data.map { prefs ->
         val json = prefs[DEEPSEEK_KEYS] ?: "[]"
         val type = object : TypeToken<List<String>>() {}.type
@@ -51,7 +66,7 @@ class DataStoreManager @Inject constructor(
         context.dataStore.edit { prefs -> prefs[GEMINI_KEYS] = gson.toJson(keys) }
     }
 
-    // ভয়েস সেটিংসের ফ্লো
+    // Voice Settings
     val voiceNameFlow: Flow<String> = context.dataStore.data.map { it[VOICE_NAME] ?: "Luna Default" }
     val voicePitchFlow: Flow<Float> = context.dataStore.data.map { it[VOICE_PITCH] ?: 1.0f }
     val voiceSpeedFlow: Flow<Float> = context.dataStore.data.map { it[VOICE_SPEED] ?: 1.0f }
