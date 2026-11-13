@@ -6,6 +6,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.luna.ai.feature.apikeys.ApiKeysScreen
 import com.luna.ai.feature.chat.ChatScreen
+import com.luna.ai.feature.headlines.HeadlinesScreen
 import com.luna.ai.feature.home.HomeScreen
 import com.luna.ai.feature.menu.MenuScreen
 import com.luna.ai.feature.onboarding.OnboardingScreen
@@ -55,10 +56,11 @@ fun LunaNavGraph() {
         composable(Screen.Tools.route) { ToolsScreen(onBackClick = { navController.popBackStack() }) }
         composable(Screen.Tasks.route) { TaskScreen(onBackClick = { navController.popBackStack() }) }
         composable(Screen.ApiKeys.route) { ApiKeysScreen(onBackClick = { navController.popBackStack() }) }
+        composable(Screen.VoiceChanger.route) { VoiceChangerScreen(onBackClick = { navController.popBackStack() }) }
 
-        // নতুন Voice Changer স্ক্রিন
-        composable(Screen.VoiceChanger.route) { 
-            VoiceChangerScreen(onBackClick = { navController.popBackStack() }) 
+        // নতুন খবর (Headlines) স্ক্রিন
+        composable(Screen.Headlines.route) { 
+            HeadlinesScreen(onBackClick = { navController.popBackStack() }) 
         }
 
         // বাকি ফাঁকা স্ক্রিনগুলো
@@ -66,7 +68,6 @@ fun LunaNavGraph() {
         composable(Screen.Device.route) { PlaceholderScreen("Device Control") }
         composable(Screen.Memory.route) { PlaceholderScreen("Memory") }
         composable(Screen.Soul.route) { PlaceholderScreen("Soul") }
-        composable(Screen.Headlines.route) { PlaceholderScreen("Today Headlines") }
         composable(Screen.Customize.route) { PlaceholderScreen("Customize") }
     }
 }
