@@ -28,6 +28,9 @@ class VoiceManager(private val context: Context) {
 
     private var onSpeechResult: ((String) -> Unit)? = null
     private var onSpeechEnd: (() -> Unit)? = null
+    
+    private var currentPitch = 1.0f
+    private var currentSpeed = 1.0f
 
     init {
         initTTS()
@@ -36,32 +39,29 @@ class VoiceManager(private val context: Context) {
     private fun initTTS() {
         textToSpeech = TextToSpeech(context) { status ->
             if (status == TextToSpeech.SUCCESS) {
-                // বাংলা এবং ইংরেজি সাপোর্ট সেট করা
                 val result = textToSpeech?.setLanguage(Locale("bn", "BD"))
                 if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
-                    // বাংলা না থাকলে ডিফল্ট (ইংরেজি) সেট হবে
                     textToSpeech?.language = Locale.getDefault()
                 }
                 
                 textToSpeech?.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
-                    override fun onStart(utteranceId: String?) {
-                        _isSpeaking.value = true
-                    }
-
-                    override fun onDone(utteranceId: String?) {
-                        _isSpeaking.value = false
-                    }
-
-                    override fun onError(utteranceId: String?) {
-                        _isSpeaking.value = false
-                    }
+                    override fun onStart(utteranceId: String?) { _isSpeaking.value = true }
+                    override fun onDone(utteranceId: String?) { _isSpeaking.value = false }
+                    override fun onError(utteranceId: String?) { _isSpeaking.value = false }
                 })
             }
         }
     }
 
+    fun updateVoiceParameters(pitch: Float, speed: Float) {
+        currentPitch = pitch
+        currentSpeed = speed
+    }
+
     fun speak(text: String) {
         _isSpeaking.value = true
+        textToSpeech?.setPitch(currentPitch)
+        textToSpeech?.setSpeechRate(currentSpeed)
         val params = Bundle()
         textToSpeech?.speak(text, TextToSpeech.QUEUE_FLUSH, params, "LunaSpeak")
     }
@@ -71,10 +71,7 @@ class VoiceManager(private val context: Context) {
         _isSpeaking.value = false
     }
 
-    fun startListening(
-        onResult: (String) -> Unit,
-        onEnd: () -> Unit
-    ) {
+    fun startListening(onResult: (String) -> Unit, onEnd: () -> Unit) {
         this.onSpeechResult = onResult
         this.onSpeechEnd = onEnd
 
@@ -86,10 +83,7 @@ class VoiceManager(private val context: Context) {
                 override fun onRmsChanged(rmsdB: Float) {}
                 override fun onBufferReceived(buffer: ByteArray?) {}
                 override fun onEndOfSpeech() { _isListening.value = false }
-                override fun onError(error: Int) {
-                    _isListening.value = false
-                    onSpeechEnd?.invoke()
-                }
+                override fun onError(error: Int) { _isListening.value = false; onSpeechEnd?.invoke() }
                 override fun onResults(results: Bundle?) {
                     val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
                     if (!matches.isNullOrEmpty()) {
@@ -104,8 +98,7 @@ class VoiceManager(private val context: Context) {
 
             val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
                 putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
-                putExtra(RecognizerIntent.EXTRA_LANGUAGE, "bn-BD") // বাংলা ট্রাই করবে, না পেলে ইংরেজি
-                putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, Locale.getDefault())
+                putExtra(RecognizerIntent.EXTRA_LANGUAGE, "bn-BD")
             }
             speechRecognizer?.startListening(intent)
         } else {
