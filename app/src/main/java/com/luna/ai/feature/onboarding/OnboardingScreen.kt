@@ -34,6 +34,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.luna.ai.design.theme.CyanGlow
 import com.luna.ai.design.theme.DeepBlack
 import com.luna.ai.design.theme.ElectricPurple
@@ -48,7 +49,10 @@ data class OnboardingPage(
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun OnboardingScreen(onFinished: () -> Unit) {
+fun OnboardingScreen(
+    onFinished: () -> Unit,
+    viewModel: OnboardingViewModel = hiltViewModel()
+) {
     val pages = listOf(
         OnboardingPage("Smart Chat", "Talk to Luna about anything. She understands you and replies intelligently.", Icons.Default.AutoAwesome),
         OnboardingPage("Voice Assistant", "Just tap the mic and speak. Luna listens and talks back to you.", Icons.Default.Mic),
@@ -59,14 +63,10 @@ fun OnboardingScreen(onFinished: () -> Unit) {
     val scope = rememberCoroutineScope()
 
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(DeepBlack)
+        modifier = Modifier.fillMaxSize().background(DeepBlack)
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(24.dp),
+            modifier = Modifier.fillMaxSize().padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             HorizontalPager(
@@ -112,7 +112,6 @@ fun OnboardingScreen(onFinished: () -> Unit) {
                 }
             }
 
-            // ইন্ডিকেটর ডট
             Row(
                 modifier = Modifier.height(50.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -128,20 +127,18 @@ fun OnboardingScreen(onFinished: () -> Unit) {
                 }
             }
 
-            // পরবর্তী বা শুরু করুন বাটন
             Button(
                 onClick = {
                     if (pagerState.currentPage == pages.size - 1) {
-                        onFinished()
+                        // শেষ বাটনে ক্লিক করলে ডাটাবেসে সেভ হবে এবং হোমে যাবে
+                        viewModel.completeOnboarding(onFinished)
                     } else {
                         scope.launch {
                             pagerState.animateScrollToPage(pagerState.currentPage + 1)
                         }
                     }
                 },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(50.dp),
+                modifier = Modifier.fillMaxWidth().height(50.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = ElectricPurple),
                 shape = CircleShape
             ) {
