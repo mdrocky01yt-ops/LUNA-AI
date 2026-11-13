@@ -14,6 +14,7 @@ import com.luna.ai.feature.onboarding.OnboardingScreen
 import com.luna.ai.feature.placeholder.PlaceholderScreen
 import com.luna.ai.feature.settings.SettingsScreen
 import com.luna.ai.feature.silent.SilentScreen
+import com.luna.ai.feature.soul.SoulScreen
 import com.luna.ai.feature.splash.SplashScreen
 import com.luna.ai.feature.tasks.TaskScreen
 import com.luna.ai.feature.tools.ToolsScreen
@@ -28,27 +29,13 @@ fun LunaNavGraph() {
         
         composable(Screen.Splash.route) {
             SplashScreen(
-                onNavigateToOnboarding = {
-                    navController.navigate(Screen.Onboarding.route) {
-                        popUpTo(Screen.Splash.route) { inclusive = true }
-                    }
-                },
-                onNavigateToHome = {
-                    navController.navigate(Screen.Home.route) {
-                        popUpTo(Screen.Splash.route) { inclusive = true }
-                    }
-                }
+                onNavigateToOnboarding = { navController.navigate(Screen.Onboarding.route) { popUpTo(Screen.Splash.route) { inclusive = true } } },
+                onNavigateToHome = { navController.navigate(Screen.Home.route) { popUpTo(Screen.Splash.route) { inclusive = true } } }
             )
         }
         
         composable(Screen.Onboarding.route) {
-            OnboardingScreen(
-                onFinished = {
-                    navController.navigate(Screen.Home.route) {
-                        popUpTo(Screen.Onboarding.route) { inclusive = true }
-                    }
-                }
-            )
+            OnboardingScreen(onFinished = { navController.navigate(Screen.Home.route) { popUpTo(Screen.Onboarding.route) { inclusive = true } } })
         }
 
         composable(Screen.Home.route) {
@@ -79,10 +66,12 @@ fun LunaNavGraph() {
         composable(Screen.Headlines.route) { HeadlinesScreen(onBackClick = { navController.popBackStack() }) }
         composable(Screen.Memory.route) { MemoryScreen(onBackClick = { navController.popBackStack() }) }
         composable(Screen.Silent.route) { SilentScreen(onBackClick = { navController.popBackStack() }) }
+        
+        // নতুন সোল (Soul) স্ক্রিন
+        composable(Screen.Soul.route) { SoulScreen(onBackClick = { navController.popBackStack() }) }
 
         // বাকি ফাঁকা স্ক্রিনগুলো
         composable(Screen.Device.route) { PlaceholderScreen("Device Control") }
-        composable(Screen.Soul.route) { PlaceholderScreen("Soul") }
         composable(Screen.Customize.route) { PlaceholderScreen("Customize") }
     }
 }
