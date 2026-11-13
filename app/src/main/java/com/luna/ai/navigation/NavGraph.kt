@@ -6,7 +6,9 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.luna.ai.feature.chat.ChatScreen
 import com.luna.ai.feature.home.HomeScreen
+import com.luna.ai.feature.menu.MenuScreen
 import com.luna.ai.feature.onboarding.OnboardingScreen
+import com.luna.ai.feature.placeholder.PlaceholderScreen
 import com.luna.ai.feature.settings.SettingsScreen
 import com.luna.ai.feature.splash.SplashScreen
 import com.luna.ai.feature.tasks.TaskScreen
@@ -33,13 +35,35 @@ fun LunaNavGraph() {
                 onVoiceClick = { navController.navigate(Screen.Voice.route) },
                 onSettingsClick = { navController.navigate(Screen.Settings.route) },
                 onToolsClick = { navController.navigate(Screen.Tools.route) },
-                onTasksClick = { navController.navigate(Screen.Tasks.route) } // টাস্ক স্ক্রিনে যাওয়ার লিংক
+                onTasksClick = { navController.navigate(Screen.Tasks.route) },
+                onMenuClick = { navController.navigate(Screen.Menu.route) } // নতুন মেনু বাটনের লিংক
             )
         }
+
+        // মেনু স্ক্রিন
+        composable(Screen.Menu.route) {
+            MenuScreen(
+                onBackClick = { navController.popBackStack() },
+                onItemClick = { route ->
+                    navController.navigate(route)
+                }
+            )
+        }
+
+        // আগের তৈরি করা স্ক্রিনগুলো
         composable(Screen.Chat.route) { ChatScreen(onBackClick = { navController.popBackStack() }) }
         composable(Screen.Voice.route) { VoiceScreen(onBackClick = { navController.popBackStack() }) }
         composable(Screen.Settings.route) { SettingsScreen(onBackClick = { navController.popBackStack() }) }
         composable(Screen.Tools.route) { ToolsScreen(onBackClick = { navController.popBackStack() }) }
         composable(Screen.Tasks.route) { TaskScreen(onBackClick = { navController.popBackStack() }) }
+
+        // নতুন ফাঁকা স্ক্রিনগুলো (পরে কাজ করব)
+        composable(Screen.Silent.route) { PlaceholderScreen("Silent Mode") }
+        composable(Screen.ApiKeys.route) { PlaceholderScreen("API Keys") }
+        composable(Screen.Device.route) { PlaceholderScreen("Device Control") }
+        composable(Screen.Memory.route) { PlaceholderScreen("Memory") }
+        composable(Screen.Soul.route) { PlaceholderScreen("Soul") }
+        composable(Screen.Headlines.route) { PlaceholderScreen("Today Headlines") }
+        composable(Screen.Customize.route) { PlaceholderScreen("Customize") }
     }
 }
