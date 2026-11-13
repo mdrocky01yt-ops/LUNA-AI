@@ -28,24 +28,22 @@ class DataStoreManager @Inject constructor(
         val VOICE_PITCH = floatPreferencesKey("voice_pitch")
         val VOICE_SPEED = floatPreferencesKey("voice_speed")
 
-        // নতুন যুক্ত হলো: ইউজার প্রথমবার অ্যাপ ওপেন করেছে কিনা
         val IS_FIRST_LAUNCH = booleanPreferencesKey("is_first_launch")
+        
+        // লুনার ব্যক্তিত্ব সেভ করার জন্য
+        val AI_PERSONALITY = stringPreferencesKey("ai_personality")
     }
 
     private val gson = Gson()
 
-    // প্রথমবার লঞ্চ চেক
     val isFirstLaunchFlow: Flow<Boolean> = context.dataStore.data.map { prefs ->
         prefs[IS_FIRST_LAUNCH] ?: true
     }
 
     suspend fun setFirstLaunchCompleted() {
-        context.dataStore.edit { prefs ->
-            prefs[IS_FIRST_LAUNCH] = false
-        }
+        context.dataStore.edit { prefs -> prefs[IS_FIRST_LAUNCH] = false }
     }
 
-    // API Keys
     val deepSeekKeysFlow: Flow<List<String>> = context.dataStore.data.map { prefs ->
         val json = prefs[DEEPSEEK_KEYS] ?: "[]"
         val type = object : TypeToken<List<String>>() {}.type
@@ -66,7 +64,6 @@ class DataStoreManager @Inject constructor(
         context.dataStore.edit { prefs -> prefs[GEMINI_KEYS] = gson.toJson(keys) }
     }
 
-    // Voice Settings
     val voiceNameFlow: Flow<String> = context.dataStore.data.map { it[VOICE_NAME] ?: "Luna Default" }
     val voicePitchFlow: Flow<Float> = context.dataStore.data.map { it[VOICE_PITCH] ?: 1.0f }
     val voiceSpeedFlow: Flow<Float> = context.dataStore.data.map { it[VOICE_SPEED] ?: 1.0f }
@@ -76,6 +73,17 @@ class DataStoreManager @Inject constructor(
             prefs[VOICE_NAME] = name
             prefs[VOICE_PITCH] = pitch
             prefs[VOICE_SPEED] = speed
+        }
+    }
+
+    // ব্যক্তিত্ব সেভ ও রিড করা
+    val aiPersonalityFlow: Flow<String> = context.dataStore.data.map { prefs ->
+        prefs[AI_PERSONALITY] ?: "You are Luna, a helpful and friendly AI assistant. You reply in Bengali."
+    }
+
+    suspend fun saveAiPersonality(personalityPrompt: String) {
+        context.dataStore.edit { prefs ->
+            prefs[AI_PERSONALITY] = personalityPrompt
         }
     }
 }
