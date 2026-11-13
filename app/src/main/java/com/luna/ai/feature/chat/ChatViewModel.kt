@@ -5,13 +5,14 @@ import androidx.lifecycle.viewModelScope
 import com.luna.ai.ai.model.ChatMessage
 import com.luna.ai.ai.repository.AiRepository
 import com.luna.ai.core.database.ChatDao
+import com.luna.ai.core.datastore.DataStoreManager
 import com.luna.ai.core.device.ActionParser
 import com.luna.ai.core.model.Message
-import com.luna.ai.core.utils.PromptHelper
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -20,7 +21,8 @@ import javax.inject.Inject
 class ChatViewModel @Inject constructor(
     private val repository: AiRepository,
     private val chatDao: ChatDao,
-    private val actionParser: ActionParser // নতুন যুক্ত হলো
+    private val actionParser: ActionParser,
+    private val dataStoreManager: DataStoreManager
 ) : ViewModel() {
 
     val messages: StateFlow<List<Message>> = chatDao.getAllMessages()
@@ -36,8 +38,13 @@ class ChatViewModel @Inject constructor(
     private val apiHistory = mutableListOf<ChatMessage>()
 
     init {
-        // এআই-কে অ্যাকশন নেওয়ার নিয়ম শেখানো হলো
-        apiHistory.add(ChatMessage("system", PromptHelper.getSystemPrompt()))
+        // অ্যাপ ওপেন হওয়ার সময় সেভ করা পার্সোনালিটি লোড করবে
+        viewModelScope.launch {
+            val personality = dataStoreManager.aiPersonalityFlow.first()
+            // অ্যাকশন কমান্ডের নিয়ম + সেভ করা পার্সোনালিটি একসাথে সেট করা হলো
+            val systemPrompt = "$personality\n\nIMPORTANT: You can control the Android phone.\nIf user asks to do something on phone, reply EXACTLY like: ACTION:OPEN_APP:package.name OR ACTION:FLASHLIGHT OR ACTION:VOLUME_UP OR ACTION:VOLUME_DOWN"
+            apiHistory.add(ChatMessage("system", systemPrompt))
+        }
     }
 
     fun sendMessage(userText: String) {
@@ -57,19 +64,14 @@ class ChatViewModel @Inject constructor(
             result.onSuccess { reply ->
                 var finalReply = reply
                 
-                // এআই যদি অ্যাকশন কমান্ড দেয়, তবে তা এক্সিকিউট করা হবে
                 if (reply.contains("ACTION:")) {
                     val actionExecuted = actionParser.executeAction(reply)
-                    if (actionExecuted) {
-                        finalReply = "✅ কাজটি সম্পন্ন করা হয়েছে।"
-                    } else {
-                        finalReply = "❌ দুঃখিত, আমি কাজটি করতে পারিনি।"
-                    }
+                    finalReply = if (actionExecuted) "✅ কাজটি সম্পন্ন করা হয়েছে।" else "❌ দুঃখিত, কাজটি করা সম্ভব হয়নি।"
                 }
 
                 val lunaMsg = Message(text = finalReply, isFromUser = false)
                 chatDao.insertMessage(lunaMsg)
-                apiHistory.add(ChatMessage("assistant", reply)) // হিস্ট্রিতে অরিজিনাল রিপ্লাই সেভ হবে
+                apiHistory.add(ChatMessage("assistant", reply))
             }.onFailure { error ->
                 val errorMsg = Message(text = "Error: ${error.message}", isFromUser = false)
                 chatDao.insertMessage(errorMsg)
@@ -81,7 +83,9 @@ class ChatViewModel @Inject constructor(
         viewModelScope.launch {
             chatDao.clearHistory()
             apiHistory.clear()
-            apiHistory.add(ChatMessage("system", PromptHelper.getSystemPrompt()))
+            val personality = dataStoreManager.aiPersonalityFlow.first()
+            val systemPrompt = "$personality\n\nIMPORTANT: You can control the Android phone.\nIf user asks to do something on phone, reply EXACTLY like: ACTION:OPEN_APP:package.name OR ACTION:FLASHLIGHT OR ACTION:VOLUME_UP OR ACTION:VOLUME_DOWN"
+            apiHistory.add(ChatMessage("system", systemPrompt))
         }
     }
 }
