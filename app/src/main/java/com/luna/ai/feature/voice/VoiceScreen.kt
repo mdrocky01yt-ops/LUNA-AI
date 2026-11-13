@@ -20,6 +20,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Keyboard
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -40,6 +41,7 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.luna.ai.core.model.AIState
+import com.luna.ai.design.components.AudioWaveform
 import com.luna.ai.design.theme.CyanGlow
 import com.luna.ai.design.theme.DeepBlack
 import com.luna.ai.design.theme.ElectricPurple
@@ -49,6 +51,7 @@ import com.luna.ai.feature.home.components.LunaAvatar
 @Composable
 fun VoiceScreen(
     onBackClick: () -> Unit = {},
+    onKeyboardClick: () -> Unit = {}, // লেখার জন্য অপশন (ভবিষ্যতে Silent Mode-এ নিয়ে যাবে)
     viewModel: VoiceViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
@@ -112,10 +115,13 @@ fun VoiceScreen(
 
             Spacer(modifier = Modifier.weight(0.5f))
 
-            // এভাটার
+            // এভাটার এবং রিং
             LunaAvatar(aiState = aiState)
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // অডিও ওয়েভ (শুধু কথা বলার সময় দেখাবে)
+            AudioWaveform(isSpeaking = isSpeaking)
 
             // ইউজার যা বলেছে
             if (userQuery.isNotEmpty()) {
@@ -141,27 +147,28 @@ fun VoiceScreen(
 
             Spacer(modifier = Modifier.weight(1f))
 
-            // কন্ট্রোল বাটন (Stop এবং Mic)
+            // কন্ট্রোল বাটন (Stop, Mic, Keyboard)
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center,
+                horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 // স্টপ বাটন
-                Box(
-                    modifier = Modifier
-                        .size(60.dp)
-                        .background(Color(0x33FFFFFF), CircleShape)
-                        .clickable { 
-                            viewModel.stopListening()
-                            onBackClick() 
-                        },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(Icons.Default.Close, contentDescription = "Stop", tint = Color.White)
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Box(
+                        modifier = Modifier
+                            .size(60.dp)
+                            .background(Color(0x33FFFFFF), CircleShape)
+                            .clickable { 
+                                viewModel.stopListening()
+                                onBackClick() 
+                            },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(Icons.Default.Close, contentDescription = "Stop", tint = Color.White)
+                    }
+                    Text(text = "Stop", color = PremiumWhite, fontSize = 12.sp, modifier = Modifier.padding(top = 8.dp))
                 }
-
-                Spacer(modifier = Modifier.size(32.dp))
 
                 // মাইক বাটন
                 Box(
@@ -184,6 +191,20 @@ fun VoiceScreen(
                         tint = Color.White,
                         modifier = Modifier.size(40.dp)
                     )
+                }
+
+                // কিবোর্ড বাটন (Silent Mode-এ যাওয়ার জন্য)
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Box(
+                        modifier = Modifier
+                            .size(60.dp)
+                            .background(Color(0x33FFFFFF), CircleShape)
+                            .clickable { onKeyboardClick() },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(Icons.Default.Keyboard, contentDescription = "Keyboard", tint = Color.White)
+                    }
+                    Text(text = "Keyboard", color = PremiumWhite, fontSize = 12.sp, modifier = Modifier.padding(top = 8.dp))
                 }
             }
         }
