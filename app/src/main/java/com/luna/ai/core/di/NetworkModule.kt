@@ -33,34 +33,23 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun provideRetrofit(okHttpClient: OkHttpClient): Retrofit {
+    fun provideDeepSeekService(okHttpClient: OkHttpClient): DeepSeekService {
         return Retrofit.Builder()
-            .baseUrl("https://api.deepseek.com/") // এটি DeepSeek এর জন্য
+            .baseUrl("https://api.deepseek.com/")
             .client(okHttpClient)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
+            .create(DeepSeekService::class.java)
     }
 
     @Provides
     @Singleton
-    fun provideDeepSeekService(retrofit: Retrofit): DeepSeekService {
-        return retrofit.create(DeepSeekService::class.java)
-    }
-
-    // Gemini-র জন্য আলাদা Retrofit (কারণ Base URL আলাদা)
-    @Provides
-    @Singleton
-    fun provideGeminiRetrofit(okHttpClient: OkHttpClient): Retrofit {
+    fun provideGeminiService(okHttpClient: OkHttpClient): GeminiService {
         return Retrofit.Builder()
             .baseUrl("https://generativelanguage.googleapis.com/")
             .client(okHttpClient)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
-    }
-
-    @Provides
-    @Singleton
-    fun provideGeminiService(retrofit: Retrofit): GeminiService {
-        return retrofit.create(GeminiService::class.java)
+            .create(GeminiService::class.java)
     }
 }
