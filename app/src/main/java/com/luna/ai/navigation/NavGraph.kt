@@ -14,6 +14,7 @@ import com.luna.ai.feature.settings.SettingsScreen
 import com.luna.ai.feature.splash.SplashScreen
 import com.luna.ai.feature.tasks.TaskScreen
 import com.luna.ai.feature.tools.ToolsScreen
+import com.luna.ai.feature.voice.VoiceChangerScreen
 import com.luna.ai.feature.voice.VoiceScreen
 
 @Composable
@@ -53,9 +54,12 @@ fun LunaNavGraph() {
         composable(Screen.Settings.route) { SettingsScreen(onBackClick = { navController.popBackStack() }) }
         composable(Screen.Tools.route) { ToolsScreen(onBackClick = { navController.popBackStack() }) }
         composable(Screen.Tasks.route) { TaskScreen(onBackClick = { navController.popBackStack() }) }
-
-        // নতুন আসল API Keys স্ক্রিন
         composable(Screen.ApiKeys.route) { ApiKeysScreen(onBackClick = { navController.popBackStack() }) }
+
+        // নতুন Voice Changer স্ক্রিন
+        composable(Screen.VoiceChanger.route) { 
+            VoiceChangerScreen(onBackClick = { navController.popBackStack() }) 
+        }
 
         // বাকি ফাঁকা স্ক্রিনগুলো
         composable(Screen.Silent.route) { PlaceholderScreen("Silent Mode") }
