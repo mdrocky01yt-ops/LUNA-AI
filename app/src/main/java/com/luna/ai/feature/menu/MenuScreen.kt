@@ -28,6 +28,7 @@ import androidx.compose.material.icons.filled.Psychology
 import androidx.compose.material.icons.filled.RecordVoiceOver
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Task
+import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -52,6 +53,7 @@ fun MenuScreen(
 ) {
     val menuItems = listOf(
         MenuItem("CHAT", "লেখা ও কথোপকথনের ইতিহাস", Icons.Default.Chat, "chat"),
+        MenuItem("VOICE CHANGER", "১২টি ভিন্ন কণ্ঠস্বর", Icons.Default.Mic, "voice_changer"), // নতুন
         MenuItem("SILENT", "টাইপ করে কমান্ড দিন", Icons.Default.RecordVoiceOver, "silent"),
         MenuItem("TOOLS", "সব সুবিধা এক জায়গায়", Icons.Default.Build, "tools"),
         MenuItem("CUSTOMIZE", "রঙ, আলো ও অ্যানিমেশন", Icons.Default.Palette, "customize"),
@@ -65,20 +67,13 @@ fun MenuScreen(
     )
 
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    colors = listOf(DeepBlack, Color(0xFF11001C), DeepBlack)
-                )
-            )
+        modifier = Modifier.fillMaxSize().background(
+            Brush.verticalGradient(colors = listOf(DeepBlack, Color(0xFF11001C), DeepBlack))
+        )
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
-            // টপ বার
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 24.dp),
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 24.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 IconButton(onClick = onBackClick) {
@@ -94,7 +89,6 @@ fun MenuScreen(
                 )
             }
 
-            // মেনু লিস্ট
             LazyColumn(
                 modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -119,32 +113,14 @@ fun MenuCard(item: MenuItem, onClick: () -> Unit) {
         verticalAlignment = Alignment.CenterVertically
     ) {
         Box(
-            modifier = Modifier
-                .size(45.dp)
-                .background(Color(0x33FFFFFF), RoundedCornerShape(12.dp)),
+            modifier = Modifier.size(45.dp).background(Color(0x33FFFFFF), RoundedCornerShape(12.dp)),
             contentAlignment = Alignment.Center
         ) {
-            Icon(
-                imageVector = item.icon,
-                contentDescription = item.title,
-                tint = CyanGlow,
-                modifier = Modifier.size(24.dp)
-            )
+            Icon(imageVector = item.icon, contentDescription = item.title, tint = CyanGlow, modifier = Modifier.size(24.dp))
         }
         Column(modifier = Modifier.padding(start = 16.dp)) {
-            Text(
-                text = item.title,
-                color = ElectricPurple,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold,
-                letterSpacing = 1.sp
-            )
-            Text(
-                text = item.subtitle,
-                color = Color.Gray,
-                fontSize = 12.sp,
-                modifier = Modifier.padding(top = 4.dp)
-            )
+            Text(text = item.title, color = ElectricPurple, fontSize = 16.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+            Text(text = item.subtitle, color = Color.Gray, fontSize = 12.sp, modifier = Modifier.padding(top = 4.dp))
         }
     }
 }
