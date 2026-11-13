@@ -17,18 +17,31 @@ class DataStoreManager @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
     companion object {
-        val API_KEY = stringPreferencesKey("api_key")
+        val DEEPSEEK_KEYS = stringPreferencesKey("deepseek_keys")
+        val GEMINI_KEYS = stringPreferencesKey("gemini_keys")
     }
 
-    // API Key সেভ করা
-    suspend fun saveApiKey(key: String) {
+    // DeepSeek Keys সেভ ও রিড করা (কমা দিয়ে আলাদা করে রাখব যাতে অর্ডার ঠিক থাকে)
+    suspend fun saveDeepSeekKeys(keys: List<String>) {
         context.dataStore.edit { prefs ->
-            prefs[API_KEY] = key
+            prefs[DEEPSEEK_KEYS] = keys.joinToString(",")
         }
     }
 
-    // API Key রিড করা (Flow)
-    val apiKeyFlow: Flow<String> = context.dataStore.data.map { prefs ->
-        prefs[API_KEY] ?: ""
+    val deepSeekKeysFlow: Flow<List<String>> = context.dataStore.data.map { prefs ->
+        val keysString = prefs[DEEPSEEK_KEYS] ?: ""
+        if (keysString.isBlank()) emptyList() else keysString.split(",").filter { it.isNotBlank() }
+    }
+
+    // Gemini Keys সেভ ও রিড করা
+    suspend fun saveGeminiKeys(keys: List<String>) {
+        context.dataStore.edit { prefs ->
+            prefs[GEMINI_KEYS] = keys.joinToString(",")
+        }
+    }
+
+    val geminiKeysFlow: Flow<List<String>> = context.dataStore.data.map { prefs ->
+        val keysString = prefs[GEMINI_KEYS] ?: ""
+        if (keysString.isBlank()) emptyList() else keysString.split(",").filter { it.isNotBlank() }
     }
 }
