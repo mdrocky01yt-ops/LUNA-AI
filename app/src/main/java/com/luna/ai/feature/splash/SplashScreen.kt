@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -24,13 +25,21 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.luna.ai.design.theme.CyanGlow
 import com.luna.ai.design.theme.DeepBlack
 import com.luna.ai.design.theme.PremiumWhite
 import kotlinx.coroutines.delay
 
 @Composable
-fun SplashScreen(onTimeout: () -> Unit) {
+fun SplashScreen(
+    onNavigateToOnboarding: () -> Unit,
+    onNavigateToHome: () -> Unit,
+    viewModel: SplashViewModel = hiltViewModel()
+) {
+    val isFirstLaunch by viewModel.isFirstLaunch.collectAsState()
+    var isTimerDone by remember { mutableStateOf(false) }
+
     var startAnimation by remember { mutableStateOf(false) }
     
     val alphaAnim by animateFloatAsState(
@@ -45,8 +54,19 @@ fun SplashScreen(onTimeout: () -> Unit) {
 
     LaunchedEffect(key1 = true) {
         startAnimation = true
-        delay(2500) // ২.৫ সেকেন্ড পর হোম স্ক্রিনে যাবে
-        onTimeout()
+        delay(2500) // ২.৫ সেকেন্ড অপেক্ষা
+        isTimerDone = true
+    }
+
+    // টাইমার শেষ হলে এবং ডাটাবেস থেকে রেজাল্ট আসলে কোথায় যাবে ঠিক করবে
+    LaunchedEffect(isTimerDone, isFirstLaunch) {
+        if (isTimerDone) {
+            if (isFirstLaunch) {
+                onNavigateToOnboarding()
+            } else {
+                onNavigateToHome()
+            }
+        }
     }
 
     Box(
@@ -63,9 +83,7 @@ fun SplashScreen(onTimeout: () -> Unit) {
             Text(
                 text = "🌙",
                 fontSize = 80.sp,
-                modifier = Modifier
-                    .scale(scaleAnim)
-                    .alpha(alphaAnim)
+                modifier = Modifier.scale(scaleAnim).alpha(alphaAnim)
             )
             Spacer(modifier = Modifier.height(16.dp))
             Text(
@@ -73,18 +91,14 @@ fun SplashScreen(onTimeout: () -> Unit) {
                 color = PremiumWhite,
                 fontSize = 32.sp,
                 fontWeight = FontWeight.Bold,
-                modifier = Modifier
-                    .scale(scaleAnim)
-                    .alpha(alphaAnim)
+                modifier = Modifier.scale(scaleAnim).alpha(alphaAnim)
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = "Always With You",
                 color = CyanGlow,
                 fontSize = 14.sp,
-                modifier = Modifier
-                    .scale(scaleAnim)
-                    .alpha(alphaAnim)
+                modifier = Modifier.scale(scaleAnim).alpha(alphaAnim)
             )
         }
     }
