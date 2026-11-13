@@ -8,6 +8,7 @@ sealed class Screen(val route: String) {
     object Chat : Screen("chat")
     object Silent : Screen("silent")
     object Voice : Screen("voice")
+    object VoiceChanger : Screen("voice_changer") // নতুন যুক্ত হলো
     object Settings : Screen("settings")
     object Tools : Screen("tools")
     object Tasks : Screen("tasks")
