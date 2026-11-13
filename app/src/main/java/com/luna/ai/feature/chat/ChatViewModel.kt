@@ -20,7 +20,6 @@ class ChatViewModel @Inject constructor(
     private val chatDao: ChatDao
 ) : ViewModel() {
 
-    // ডাটাবেস থেকে মেসেজ লোড করা
     val messages: StateFlow<List<Message>> = chatDao.getAllMessages()
         .stateIn(
             scope = viewModelScope,
@@ -41,23 +40,18 @@ class ChatViewModel @Inject constructor(
         if (userText.isBlank()) return
 
         viewModelScope.launch {
-            // ১. ইউজারের মেসেজ ডাটাবেসে সেভ
             val userMsg = Message(text = userText, isFromUser = true)
             chatDao.insertMessage(userMsg)
 
-            // ২. হিস্ট্রিতে যোগ করা
             apiHistory.add(ChatMessage("user", userText))
-
-            // ৩. লোডিং শুরু
             _isLoading.value = true
 
-            // ৪. API কল
-            val result = repository.sendMessage(apiHistory)
+            // এখানে ফাংশনের নাম আপডেট করা হলো
+            val result = repository.sendDeepSeekMessage(apiHistory)
             
             _isLoading.value = false
             
             result.onSuccess { reply ->
-                // লুনার উত্তর ডাটাবেসে সেভ
                 val lunaMsg = Message(text = reply, isFromUser = false)
                 chatDao.insertMessage(lunaMsg)
                 apiHistory.add(ChatMessage("assistant", reply))
