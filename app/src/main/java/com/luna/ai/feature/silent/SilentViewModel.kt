@@ -1,0 +1,71 @@
+package com.luna.ai.feature.silent
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.luna.ai.ai.model.ChatMessage
+import com.luna.ai.ai.repository.AiRepository
+import com.luna.ai.core.device.ActionParser
+import com.luna.ai.core.utils.PromptHelper
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
+import javax.inject.Inject
+
+@HiltViewModel
+class SilentViewModel @Inject constructor(
+    private val repository: AiRepository,
+    private val actionParser: ActionParser
+) : ViewModel() {
+
+    private val _messages = MutableStateFlow<List<Pair<String, Boolean>>>(emptyList()) // True = User, False = Luna
+    val messages: StateFlow<List<Pair<String, Boolean>>> = _messages
+
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading
+
+    private val apiHistory = mutableListOf(
+        ChatMessage("system", PromptHelper.getSystemPrompt())
+    )
+
+    init {
+        _messages.value = _messages.value + ("হ্যালো! আমি লুনা। আপনি এখন টাইপ করে আমাকে কমান্ড দিতে পারেন।" to false)
+    }
+
+    fun sendCommand(userText: String) {
+        if (userText.isBlank()) return
+
+        // ইউজারের মেসেজ যোগ করা
+        _messages.value = _messages.value + (userText to true)
+        
+        // হিস্ট্রিতে যোগ করা
+        apiHistory.add(ChatMessage("user", userText))
+        _isLoading.value = true
+
+        viewModelScope.launch {
+            val result = repository.sendDeepSeekMessage(apiHistory)
+            
+            _isLoading.value = false
+            
+            result.onSuccess { reply ->
+                var finalReply = reply
+                
+                // অ্যাকশন চেক করা
+                if (reply.contains("ACTION:")) {
+                    val actionExecuted = actionParser.executeAction(reply)
+                    if (actionExecuted) {
+                        finalReply = "✅ কাজটি সম্পন্ন করা হয়েছে।"
+                    } else {
+                        finalReply = "❌ দুঃখিত, আমি কাজটি করতে পারিনি।"
+                    }
+                }
+
+                _messages.value = _messages.value + (finalReply to false)
+                apiHistory.add(ChatMessage("assistant", reply))
+                
+            }.onFailure { error ->
+                _messages.value = _messages.value + ("Error: ${error.message}" to false)
+            }
+        }
+    }
+}
