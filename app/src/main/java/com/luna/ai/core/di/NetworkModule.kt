@@ -2,6 +2,7 @@ package com.luna.ai.core.di
 
 import com.luna.ai.ai.network.DeepSeekService
 import com.luna.ai.ai.network.GeminiService
+import com.luna.ai.feature.headlines.NewsService
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -51,5 +52,17 @@ object NetworkModule {
             .addConverterFactory(GsonConverterFactory.create())
             .build()
             .create(GeminiService::class.java)
+    }
+
+    // খবরের জন্য নতুন সার্ভিস
+    @Provides
+    @Singleton
+    fun provideNewsService(okHttpClient: OkHttpClient): NewsService {
+        return Retrofit.Builder()
+            .baseUrl("https://saurav.tech/NewsAPI/")
+            .client(okHttpClient)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+            .create(NewsService::class.java)
     }
 }
