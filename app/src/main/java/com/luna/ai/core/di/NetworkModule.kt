@@ -1,6 +1,7 @@
 package com.luna.ai.core.di
 
 import com.luna.ai.ai.network.DeepSeekService
+import com.luna.ai.ai.network.GeminiService
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -34,7 +35,7 @@ object NetworkModule {
     @Singleton
     fun provideRetrofit(okHttpClient: OkHttpClient): Retrofit {
         return Retrofit.Builder()
-            .baseUrl("https://api.deepseek.com/")
+            .baseUrl("https://api.deepseek.com/") // এটি DeepSeek এর জন্য
             .client(okHttpClient)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
@@ -44,5 +45,22 @@ object NetworkModule {
     @Singleton
     fun provideDeepSeekService(retrofit: Retrofit): DeepSeekService {
         return retrofit.create(DeepSeekService::class.java)
+    }
+
+    // Gemini-র জন্য আলাদা Retrofit (কারণ Base URL আলাদা)
+    @Provides
+    @Singleton
+    fun provideGeminiRetrofit(okHttpClient: OkHttpClient): Retrofit {
+        return Retrofit.Builder()
+            .baseUrl("https://generativelanguage.googleapis.com/")
+            .client(okHttpClient)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+    }
+
+    @Provides
+    @Singleton
+    fun provideGeminiService(retrofit: Retrofit): GeminiService {
+        return retrofit.create(GeminiService::class.java)
     }
 }
