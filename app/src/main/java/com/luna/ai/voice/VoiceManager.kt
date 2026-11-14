@@ -12,14 +12,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import java.util.Locale
 
-// ক্লাসটি ফাইলের একদম উপরে ডিক্লেয়ার করা হলো
-data class VoiceProfile(
-    val name: String,
-    val pitch: Float,
-    val speed: Float,
-    val description: String
-)
-
 class VoiceManager(private val context: Context) {
 
     private var speechRecognizer: SpeechRecognizer? = null
@@ -139,22 +131,5 @@ class VoiceManager(private val context: Context) {
         speechRecognizer?.destroy()
         textToSpeech?.stop()
         textToSpeech?.shutdown()
-    }
-    
-    fun getAvailableVoiceProfiles(): List<VoiceProfile> {
-        return listOf(
-            VoiceProfile("Luna Default", 1.0f, 1.0f, "Soft & Friendly"),
-            VoiceProfile("Cute Girl", 1.3f, 1.1f, "Playful"),
-            VoiceProfile("Professional", 0.9f, 1.0f, "Confident"),
-            VoiceProfile("Relaxed", 0.95f, 0.9f, "Calm"),
-            VoiceProfile("Energetic", 1.1f, 1.2f, "Excited"),
-            VoiceProfile("Storyteller", 0.9f, 0.95f, "Slow & Clear"),
-            VoiceProfile("Whisper", 0.85f, 0.8f, "Very Soft"),
-            VoiceProfile("Sweet", 1.2f, 1.0f, "Pleasant"),
-            VoiceProfile("Robot", 0.7f, 1.1f, "Mechanical"),
-            VoiceProfile("Deep Voice", 0.6f, 0.9f, "Heavy"),
-            VoiceProfile("Male Calm", 0.8f, 0.9f, "Calm Male"),
-            VoiceProfile("Male Energetic", 0.85f, 1.1f, "Energetic Male")
-        )
     }
 }
