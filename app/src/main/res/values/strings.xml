@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">LUNA AI</string>
+    <string name="accessibility_desc">LUNA AI needs this permission to read your screen and perform actions like clicking buttons or scrolling when you give voice commands.</string>
 </resources>
