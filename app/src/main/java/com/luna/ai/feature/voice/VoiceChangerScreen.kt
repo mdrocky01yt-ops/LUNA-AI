@@ -44,7 +44,14 @@ import com.luna.ai.design.theme.DeepBlack
 import com.luna.ai.design.theme.ElectricPurple
 import com.luna.ai.design.theme.PremiumWhite
 import com.luna.ai.voice.VoiceManager
-import com.luna.ai.voice.VoiceProfile // এটি এখন VoiceManager.kt থেকে অটোমেটিক পাবে
+
+// ডাটা ক্লাস সরাসরি এই ফাইলের ভেতরে
+data class VoiceProfile(
+    val name: String,
+    val pitch: Float,
+    val speed: Float,
+    val description: String
+)
 
 @Composable
 fun VoiceChangerScreen(
@@ -62,7 +69,21 @@ fun VoiceChangerScreen(
     val context = LocalContext.current
     val voiceManager = remember { VoiceManager(context) }
 
-    val voiceProfiles = voiceManager.getAvailableVoiceProfiles()
+    // ডাটা সরাসরি এখানে তৈরি (১০টি মেয়ে, ২টি ছেলে)
+    val voiceProfiles = listOf(
+        VoiceProfile("Luna Default", 1.0f, 1.0f, "Soft & Friendly"),
+        VoiceProfile("Cute Girl", 1.3f, 1.1f, "Playful"),
+        VoiceProfile("Professional", 0.9f, 1.0f, "Confident"),
+        VoiceProfile("Relaxed", 0.95f, 0.9f, "Calm"),
+        VoiceProfile("Energetic", 1.1f, 1.2f, "Excited"),
+        VoiceProfile("Storyteller", 0.9f, 0.95f, "Slow & Clear"),
+        VoiceProfile("Whisper", 0.85f, 0.8f, "Very Soft"),
+        VoiceProfile("Sweet", 1.2f, 1.0f, "Pleasant"),
+        VoiceProfile("Robot", 0.7f, 1.1f, "Mechanical"),
+        VoiceProfile("Deep Voice", 0.6f, 0.9f, "Heavy"),
+        VoiceProfile("Male Calm", 0.8f, 0.9f, "Calm Male"),
+        VoiceProfile("Male Energetic", 0.85f, 1.1f, "Energetic Male")
+    )
 
     Column(
         modifier = Modifier.fillMaxSize().background(DeepBlack).padding(top = 24.dp)
@@ -109,7 +130,7 @@ fun VoiceChangerScreen(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         IconButton(onClick = {
                             voiceManager.updateVoiceParameters(profile.pitch, profile.speed, profile.name)
-                            voiceManager.speak("হ্যালো, আমি লুনা। আমি আপনার সাথে কথা বলতে প্রস্তুত।")
+                            voiceManager.speak("হ্যালো, আমি লুনা।")
                         }) {
                             Icon(Icons.Default.PlayArrow, contentDescription = "Preview", tint = CyanGlow)
                         }
