@@ -40,7 +40,7 @@ class SilentViewModel @Inject constructor(
         _isLoading.value = true
 
         viewModelScope.launch {
-            // এখানে আর "Gemini" প্যারামিটার নেই
+            // এখানে শুধু history পাস হচ্ছে
             val result = repository.sendMessage(apiHistory)
             
             _isLoading.value = false
