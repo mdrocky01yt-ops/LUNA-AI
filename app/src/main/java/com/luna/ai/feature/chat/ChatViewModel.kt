@@ -38,11 +38,9 @@ class ChatViewModel @Inject constructor(
     private val apiHistory = mutableListOf<ChatMessage>()
 
     init {
-        // অ্যাপ ওপেন হওয়ার সময় সেভ করা পার্সোনালিটি লোড করবে
         viewModelScope.launch {
             val personality = dataStoreManager.aiPersonalityFlow.first()
-            // অ্যাকশন কমান্ডের নিয়ম + সেভ করা পার্সোনালিটি একসাথে সেট করা হলো
-            val systemPrompt = "$personality\n\nIMPORTANT: You can control the Android phone.\nIf user asks to do something on phone, reply EXACTLY like: ACTION:OPEN_APP:package.name OR ACTION:FLASHLIGHT OR ACTION:VOLUME_UP OR ACTION:VOLUME_DOWN"
+            val systemPrompt = "$personality\n\nIMPORTANT: You can control the Android phone using Accessibility Service.\nIf user asks to do something on phone, reply EXACTLY like: ACTION:OPEN_APP:package.name OR ACTION:READ_SCREEN OR ACTION:CLICK_TEXT:text OR ACTION:SCROLL_DOWN OR ACTION:BACK OR ACTION:FLASHLIGHT OR ACTION:BATTERY"
             apiHistory.add(ChatMessage("system", systemPrompt))
         }
     }
@@ -57,7 +55,7 @@ class ChatViewModel @Inject constructor(
             apiHistory.add(ChatMessage("user", userText))
             _isLoading.value = true
 
-            val result = repository.sendDeepSeekMessage(apiHistory)
+            val result = repository.sendMessage(apiHistory)
             
             _isLoading.value = false
             
@@ -65,8 +63,13 @@ class ChatViewModel @Inject constructor(
                 var finalReply = reply
                 
                 if (reply.contains("ACTION:")) {
-                    val actionExecuted = actionParser.executeAction(reply)
-                    finalReply = if (actionExecuted) "✅ কাজটি সম্পন্ন করা হয়েছে।" else "❌ দুঃখিত, কাজটি করা সম্ভব হয়নি।"
+                    // এখানে actionResult হলো String (যেমন: "অ্যাপ ওপেন করা হয়েছে।")
+                    val actionResult = actionParser.executeAction(reply)
+                    finalReply = if (actionResult != null) {
+                        "✅ $actionResult"
+                    } else {
+                        "❌ দুঃখিত, কাজটি করা সম্ভব হয়নি।"
+                    }
                 }
 
                 val lunaMsg = Message(text = finalReply, isFromUser = false)
@@ -84,7 +87,7 @@ class ChatViewModel @Inject constructor(
             chatDao.clearHistory()
             apiHistory.clear()
             val personality = dataStoreManager.aiPersonalityFlow.first()
-            val systemPrompt = "$personality\n\nIMPORTANT: You can control the Android phone.\nIf user asks to do something on phone, reply EXACTLY like: ACTION:OPEN_APP:package.name OR ACTION:FLASHLIGHT OR ACTION:VOLUME_UP OR ACTION:VOLUME_DOWN"
+            val systemPrompt = "$personality\n\nIMPORTANT: You can control the Android phone using Accessibility Service.\nIf user asks to do something on phone, reply EXACTLY like: ACTION:OPEN_APP:package.name OR ACTION:READ_SCREEN OR ACTION:CLICK_TEXT:text OR ACTION:SCROLL_DOWN OR ACTION:BACK OR ACTION:FLASHLIGHT OR ACTION:BATTERY"
             apiHistory.add(ChatMessage("system", systemPrompt))
         }
     }
