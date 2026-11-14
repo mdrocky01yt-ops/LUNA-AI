@@ -2,7 +2,6 @@ package com.luna.ai.ai.model
 
 import com.google.gson.annotations.SerializedName
 
-// Gemini API-এর জন্য রিকোয়েস্ট ফরম্যাট
 data class GeminiRequest(
     @SerializedName("contents") val contents: List<GeminiContent>
 )
@@ -12,10 +11,15 @@ data class GeminiContent(
 )
 
 data class GeminiPart(
-    @SerializedName("text") val text: String
+    @SerializedName("text") val text: String? = null,
+    @SerializedName("inlineData") val inlineData: GeminiInlineData? = null
 )
 
-// Gemini API-এর জন্য রেসপন্স ফরম্যাট
+data class GeminiInlineData(
+    @SerializedName("mimeType") val mimeType: String,
+    @SerializedName("data") val data: String // Base64 String
+)
+
 data class GeminiResponse(
     @SerializedName("candidates") val candidates: List<GeminiCandidate>?
 )
