@@ -44,6 +44,7 @@ import com.luna.ai.design.theme.DeepBlack
 import com.luna.ai.design.theme.ElectricPurple
 import com.luna.ai.design.theme.PremiumWhite
 import com.luna.ai.voice.VoiceManager
+import com.luna.ai.voice.VoiceProfile // এই লাইনটি আগে মিসিং ছিল
 
 @Composable
 fun VoiceChangerScreen(
