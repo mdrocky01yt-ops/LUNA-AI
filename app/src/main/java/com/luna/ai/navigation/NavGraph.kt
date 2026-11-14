@@ -46,7 +46,8 @@ fun LunaNavGraph() {
                 onSettingsClick = { navController.navigate(Screen.Settings.route) },
                 onToolsClick = { navController.navigate(Screen.Tools.route) },
                 onTasksClick = { navController.navigate(Screen.Tasks.route) },
-                onMenuClick = { navController.navigate(Screen.Menu.route) }
+                onMenuClick = { navController.navigate(Screen.Menu.route) },
+                onSilentClick = { navController.navigate(Screen.Silent.route) } // নতুন যুক্ত হলো
             )
         }
 
@@ -68,8 +69,6 @@ fun LunaNavGraph() {
         composable(Screen.Memory.route) { MemoryScreen(onBackClick = { navController.popBackStack() }) }
         composable(Screen.Silent.route) { SilentScreen(onBackClick = { navController.popBackStack() }) }
         composable(Screen.Soul.route) { SoulScreen(onBackClick = { navController.popBackStack() }) }
-        
-        // নতুন কাস্টমাইজ স্ক্রিন
         composable(Screen.Customize.route) { CustomizeScreen(onBackClick = { navController.popBackStack() }) }
 
         // বাকি ফাঁকা স্ক্রিন
