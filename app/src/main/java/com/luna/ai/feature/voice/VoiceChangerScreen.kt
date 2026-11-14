@@ -44,7 +44,7 @@ import com.luna.ai.design.theme.DeepBlack
 import com.luna.ai.design.theme.ElectricPurple
 import com.luna.ai.design.theme.PremiumWhite
 import com.luna.ai.voice.VoiceManager
-import com.luna.ai.voice.VoiceProfile // এই লাইনটি আগে মিসিং ছিল
+import com.luna.ai.voice.VoiceProfile
 
 @Composable
 fun VoiceChangerScreen(
@@ -121,7 +121,6 @@ fun VoiceChangerScreen(
             }
         }
 
-        // পিচ এবং স্পিড কন্ট্রোল
         Column(modifier = Modifier.padding(16.dp).background(Color(0xFF151520), RoundedCornerShape(16.dp)).padding(16.dp)) {
             Text(text = "Speed: ${String.format("%.1f", speed)}x", color = PremiumWhite, fontSize = 14.sp)
             Slider(
