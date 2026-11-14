@@ -21,43 +21,33 @@ class DataStoreManager @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
     companion object {
-        val DEEPSEEK_KEYS = stringPreferencesKey("deepseek_keys")
+        // শুধু Gemini Key থাকবে
         val GEMINI_KEYS = stringPreferencesKey("gemini_keys")
+        
         val VOICE_NAME = stringPreferencesKey("voice_name")
         val VOICE_PITCH = floatPreferencesKey("voice_pitch")
         val VOICE_SPEED = floatPreferencesKey("voice_speed")
         val IS_FIRST_LAUNCH = booleanPreferencesKey("is_first_launch")
         val AI_PERSONALITY = stringPreferencesKey("ai_personality")
-        
-        // নতুন যুক্ত হলো: চ্যাট স্ক্রিনে ডিফল্ট কোন এআই চলবে
-        val SELECTED_AI_PROVIDER = stringPreferencesKey("selected_ai_provider") // "DeepSeek" or "Gemini"
     }
 
     private val gson = Gson()
 
-    // First Launch
     val isFirstLaunchFlow: Flow<Boolean> = context.dataStore.data.map { prefs ->
         prefs[IS_FIRST_LAUNCH] ?: true
     }
+
     suspend fun setFirstLaunchCompleted() {
         context.dataStore.edit { prefs -> prefs[IS_FIRST_LAUNCH] = false }
     }
 
-    // API Keys
-    val deepSeekKeysFlow: Flow<List<String>> = context.dataStore.data.map { prefs ->
-        val json = prefs[DEEPSEEK_KEYS] ?: "[]"
-        val type = object : TypeToken<List<String>>() {}.type
-        gson.fromJson(json, type) ?: emptyList()
-    }
-    suspend fun saveDeepSeekKeys(keys: List<String>) {
-        context.dataStore.edit { prefs -> prefs[DEEPSEEK_KEYS] = gson.toJson(keys) }
-    }
-
+    // Gemini Keys
     val geminiKeysFlow: Flow<List<String>> = context.dataStore.data.map { prefs ->
         val json = prefs[GEMINI_KEYS] ?: "[]"
         val type = object : TypeToken<List<String>>() {}.type
         gson.fromJson(json, type) ?: emptyList()
     }
+
     suspend fun saveGeminiKeys(keys: List<String>) {
         context.dataStore.edit { prefs -> prefs[GEMINI_KEYS] = gson.toJson(keys) }
     }
@@ -66,6 +56,7 @@ class DataStoreManager @Inject constructor(
     val voiceNameFlow: Flow<String> = context.dataStore.data.map { it[VOICE_NAME] ?: "Luna Default" }
     val voicePitchFlow: Flow<Float> = context.dataStore.data.map { it[VOICE_PITCH] ?: 1.0f }
     val voiceSpeedFlow: Flow<Float> = context.dataStore.data.map { it[VOICE_SPEED] ?: 1.0f }
+
     suspend fun saveVoiceSettings(name: String, pitch: Float, speed: Float) {
         context.dataStore.edit { prefs ->
             prefs[VOICE_NAME] = name
@@ -78,15 +69,8 @@ class DataStoreManager @Inject constructor(
     val aiPersonalityFlow: Flow<String> = context.dataStore.data.map { prefs ->
         prefs[AI_PERSONALITY] ?: "You are Luna, a helpful and friendly AI assistant. You reply in Bengali."
     }
+
     suspend fun saveAiPersonality(personalityPrompt: String) {
         context.dataStore.edit { prefs -> prefs[AI_PERSONALITY] = personalityPrompt }
-    }
-
-    // Selected AI Provider (Toggle state)
-    val selectedAiProviderFlow: Flow<String> = context.dataStore.data.map { prefs ->
-        prefs[SELECTED_AI_PROVIDER] ?: "Gemini" // ডিফল্ট Gemini
-    }
-    suspend fun saveSelectedAiProvider(provider: String) {
-        context.dataStore.edit { prefs -> prefs[SELECTED_AI_PROVIDER] = provider }
     }
 }
