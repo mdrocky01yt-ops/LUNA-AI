@@ -12,13 +12,10 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Chat
-import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Widgets
@@ -26,10 +23,6 @@ import androidx.compose.material.icons.filled.WorkspacePremium
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -45,8 +38,6 @@ import com.luna.ai.design.theme.ElectricPurple
 import com.luna.ai.design.theme.PremiumWhite
 import com.luna.ai.feature.home.components.BottomNavBar
 import com.luna.ai.feature.home.components.LunaAvatar
-import com.luna.ai.feature.home.components.QuickToolsPanel
-import com.luna.ai.feature.home.components.VoiceButton
 import com.luna.ai.service.FloatingBubbleService
 
 @Composable
@@ -56,18 +47,24 @@ fun HomeScreen(
     onSettingsClick: () -> Unit = {},
     onToolsClick: () -> Unit = {},
     onTasksClick: () -> Unit = {},
-    onMenuClick: () -> Unit = {} // নতুন প্যারামিটার
+    onMenuClick: () -> Unit = {},
+    onSilentClick: () -> Unit = {}
 ) {
     val context = LocalContext.current
-    var currentState by remember { mutableStateOf(AIState.IDLE) }
 
     Box(
-        modifier = Modifier.fillMaxSize().background(
-            brush = Brush.verticalGradient(colors = listOf(DeepBlack, Color(0xFF11001C), DeepBlack))
-        )
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                Brush.verticalGradient(
+                    colors = listOf(DeepBlack, Color(0xFF11001C), DeepBlack)
+                )
+            )
     ) {
         Column(
-            modifier = Modifier.fillMaxSize().padding(top = 24.dp),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(top = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // টপ বার
@@ -76,7 +73,6 @@ fun HomeScreen(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // বাম দিকে মেনু বাটন
                 Icon(
                     imageVector = Icons.Default.Menu,
                     contentDescription = "Menu",
@@ -109,41 +105,27 @@ fun HomeScreen(
 
             Spacer(modifier = Modifier.weight(1f))
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Box(modifier = Modifier.size(55.dp).background(Color(0xFF1A1A2E), CircleShape).clickable { onChatClick() }, contentAlignment = Alignment.Center) {
-                        Icon(Icons.Default.Chat, contentDescription = "Chat", tint = PremiumWhite)
-                    }
-                    Text(text = "Chat", color = PremiumWhite, fontSize = 10.sp, modifier = Modifier.padding(top = 4.dp))
-                }
-
-                LunaAvatar(aiState = currentState)
-
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Box(modifier = Modifier.size(55.dp).background(Color(0xFF1A1A2E), CircleShape).clickable { onToolsClick() }, contentAlignment = Alignment.Center) {
-                        Icon(Icons.Default.GridView, contentDescription = "Tools", tint = PremiumWhite)
-                    }
-                    Text(text = "Tools", color = PremiumWhite, fontSize = 10.sp, modifier = Modifier.padding(top = 4.dp))
-                }
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            Box(modifier = Modifier.clickable { currentState = if (currentState == AIState.IDLE) AIState.LISTENING else AIState.IDLE }) {
-                VoiceButton()
-            }
-            
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(text = if (currentState == AIState.IDLE) "Tap to Speak" else "Listening...", color = CyanGlow, fontSize = 14.sp)
+            // এভাটার (কোনো সাইড বাটন নেই)
+            LunaAvatar(aiState = AIState.LISTENING)
 
             Spacer(modifier = Modifier.weight(1f))
 
-            QuickToolsPanel(onTasksClick = onTasksClick)
-            BottomNavBar()
+            // স্ট্যাটাস লেখা
+            Text(
+                text = "Listening...", 
+                color = CyanGlow, 
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Medium,
+                modifier = Modifier.padding(bottom = 24.dp)
+            )
+
+            // নতুন বটম নেভিগেশন বার
+            BottomNavBar(
+                onHomeClick = {},
+                onChatClick = onChatClick,
+                onToolsClick = onToolsClick,
+                onSilentClick = onSilentClick
+            )
         }
     }
 }
