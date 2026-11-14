@@ -6,7 +6,7 @@ import com.luna.ai.core.model.MemoryEntity
 import com.luna.ai.core.model.Message
 import com.luna.ai.core.model.TaskEntity
 
-@Database(entities = [Message::class, TaskEntity::class, MemoryEntity::class], version = 3, exportSchema = false)
+@Database(entities = [Message::class, TaskEntity::class, MemoryEntity::class], version = 4, exportSchema = false)
 abstract class LunaDatabase : RoomDatabase() {
     abstract fun chatDao(): ChatDao
     abstract fun taskDao(): TaskDao
