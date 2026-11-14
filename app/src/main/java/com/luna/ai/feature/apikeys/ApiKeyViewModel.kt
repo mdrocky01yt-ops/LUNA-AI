@@ -15,29 +15,12 @@ class ApiKeyViewModel @Inject constructor(
     private val dataStoreManager: DataStoreManager
 ) : ViewModel() {
 
-    val deepSeekKeys: StateFlow<List<String>> = dataStoreManager.deepSeekKeysFlow.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = emptyList()
-    )
-
+    // শুধু Gemini Keys থাকবে
     val geminiKeys: StateFlow<List<String>> = dataStoreManager.geminiKeysFlow.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = emptyList()
     )
-
-    fun addDeepSeekKey(key: String) {
-        if (key.isNotBlank() && !deepSeekKeys.value.contains(key)) {
-            val newList = deepSeekKeys.value + key
-            viewModelScope.launch { dataStoreManager.saveDeepSeekKeys(newList) }
-        }
-    }
-
-    fun removeDeepSeekKey(key: String) {
-        val newList = deepSeekKeys.value - key
-        viewModelScope.launch { dataStoreManager.saveDeepSeekKeys(newList) }
-    }
 
     fun addGeminiKey(key: String) {
         if (key.isNotBlank() && !geminiKeys.value.contains(key)) {
