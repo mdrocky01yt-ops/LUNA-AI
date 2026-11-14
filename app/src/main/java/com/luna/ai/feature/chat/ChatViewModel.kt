@@ -36,14 +36,22 @@ class ChatViewModel @Inject constructor(
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading
 
+    // ডিফল্ট প্রোভাইডার DeepSeek
+    private val _selectedProvider = MutableStateFlow("DeepSeek")
+    val selectedProvider: StateFlow<String> = _selectedProvider
+
     private val apiHistory = mutableListOf<ChatMessage>()
 
     init {
         viewModelScope.launch {
             val personality = dataStoreManager.aiPersonalityFlow.first()
-            val systemPrompt = "$personality\n\nIMPORTANT: You can control the Android phone using Accessibility Service.\nIf user asks to do something on phone, reply EXACTLY like: ACTION:OPEN_APP:package.name OR ACTION:READ_SCREEN OR ACTION:CLICK_TEXT:text OR ACTION:SCROLL_DOWN OR ACTION:BACK OR ACTION:FLASHLIGHT OR ACTION:BATTERY\n\nTo generate an image, reply EXACTLY: ACTION:GENERATE_IMAGE:prompt in English"
+            val systemPrompt = "$personality\n\nIMPORTANT: You can control the Android phone using Accessibility Service.\nIf user asks to do something on phone, reply EXACTLY like: ACTION:OPEN_APP:package.name OR ACTION:READ_SCREEN OR ACTION:CLICK_TEXT:text OR ACTION:SCROLL_DOWN OR ACTION:BACK OR ACTION:FLASHLIGHT OR ACTION:BATTERY OR ACTION:BRIGHTNESS_UP OR ACTION:BRIGHTNESS_DOWN OR ACTION:READ_NOTIFICATIONS\n\nTo generate an image, reply EXACTLY: ACTION:GENERATE_IMAGE:prompt in English"
             apiHistory.add(ChatMessage("system", systemPrompt))
         }
+    }
+
+    fun setProvider(provider: String) {
+        _selectedProvider.value = provider
     }
 
     fun sendMessage(userText: String) {
@@ -56,7 +64,8 @@ class ChatViewModel @Inject constructor(
             apiHistory.add(ChatMessage("user", userText))
             _isLoading.value = true
 
-            val result = repository.sendMessage(apiHistory)
+            // সিলেক্ট করা প্রোভাইডার পাঠানো হলো
+            val result = repository.sendMessage(apiHistory, _selectedProvider.value)
             
             _isLoading.value = false
             
@@ -65,14 +74,12 @@ class ChatViewModel @Inject constructor(
                 var imageUrl: String? = null
                 
                 if (reply.contains("ACTION:")) {
-                    // ছবি বানানোর কমান্ড চেক
                     if (reply.contains("ACTION:GENERATE_IMAGE:")) {
                         val prompt = reply.substringAfter("ACTION:GENERATE_IMAGE:").trim()
                         val encodedPrompt = URLEncoder.encode(prompt, "UTF-8")
                         imageUrl = "https://image.pollinations.ai/prompt/$encodedPrompt"
                         finalText = "এই যে আপনার ছবি, তৈরি করে দিয়েছি! 🎨"
                     } else {
-                        // অন্যান্য ফোন কমান্ড
                         val actionResult = actionParser.executeAction(reply)
                         finalText = if (actionResult != null) "✅ $actionResult" else "❌ দুঃখিত, কাজটি করা সম্ভব হয়নি।"
                     }
@@ -93,7 +100,7 @@ class ChatViewModel @Inject constructor(
             chatDao.clearHistory()
             apiHistory.clear()
             val personality = dataStoreManager.aiPersonalityFlow.first()
-            val systemPrompt = "$personality\n\nIMPORTANT: You can control the Android phone using Accessibility Service.\nIf user asks to do something on phone, reply EXACTLY like: ACTION:OPEN_APP:package.name OR ACTION:READ_SCREEN OR ACTION:CLICK_TEXT:text OR ACTION:SCROLL_DOWN OR ACTION:BACK OR ACTION:FLASHLIGHT OR ACTION:BATTERY\n\nTo generate an image, reply EXACTLY: ACTION:GENERATE_IMAGE:prompt in English"
+            val systemPrompt = "$personality\n\nIMPORTANT: You can control the Android phone using Accessibility Service.\nIf user asks to do something on phone, reply EXACTLY like: ACTION:OPEN_APP:package.name OR ACTION:READ_SCREEN OR ACTION:CLICK_TEXT:text OR ACTION:SCROLL_DOWN OR ACTION:BACK OR ACTION:FLASHLIGHT OR ACTION:BATTERY OR ACTION:BRIGHTNESS_UP OR ACTION:BRIGHTNESS_DOWN OR ACTION:READ_NOTIFICATIONS\n\nTo generate an image, reply EXACTLY: ACTION:GENERATE_IMAGE:prompt in English"
             apiHistory.add(ChatMessage("system", systemPrompt))
         }
     }
