@@ -38,14 +38,12 @@ class VoiceViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            // ভয়েস সেটিংস লোড
             val pitch = dataStoreManager.voicePitchFlow.first()
             val speed = dataStoreManager.voiceSpeedFlow.first()
             voiceManager.updateVoiceParameters(pitch, speed)
 
-            // পার্সোনালিটি লোড
             val personality = dataStoreManager.aiPersonalityFlow.first()
-            val systemPrompt = "$personality\n\nIMPORTANT: Keep your answers short and conversational. You can control the Android phone.\nIf user asks to do something on phone, reply EXACTLY like: ACTION:OPEN_APP:package.name OR ACTION:FLASHLIGHT OR ACTION:VOLUME_UP OR ACTION:VOLUME_DOWN"
+            val systemPrompt = "$personality\n\nIMPORTANT: Keep answers short. You can control the phone.\nIf user asks to do something, reply EXACTLY like: ACTION:OPEN_APP:package.name OR ACTION:READ_SCREEN OR ACTION:CLICK_TEXT:text OR ACTION:SCROLL_DOWN OR ACTION:BACK OR ACTION:FLASHLIGHT OR ACTION:BATTERY"
             apiHistory.add(ChatMessage("system", systemPrompt))
         }
     }
@@ -77,14 +75,18 @@ class VoiceViewModel @Inject constructor(
         apiHistory.add(ChatMessage("user", text))
 
         viewModelScope.launch {
-            val result = repository.sendDeepSeekMessage(apiHistory)
+            val result = repository.sendMessage(apiHistory)
             
             result.onSuccess { reply ->
                 var finalReply = reply
 
                 if (reply.contains("ACTION:")) {
-                    val actionExecuted = actionParser.executeAction(reply)
-                    finalReply = if (actionExecuted) "ঠিক আছে, কাজটি করে দিয়েছি।" else "দুঃখিত, কাজটি করা সম্ভব হয়নি।"
+                    val actionResult = actionParser.executeAction(reply)
+                    finalReply = if (actionResult != null) {
+                        actionResult
+                    } else {
+                        "দুঃখিত, কাজটি করা সম্ভব হয়নি।"
+                    }
                 }
 
                 _lunaResponse.value = finalReply
