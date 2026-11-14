@@ -1,6 +1,7 @@
 package com.luna.ai.feature.chat
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,6 +15,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
@@ -33,7 +35,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.luna.ai.design.theme.CyanGlow
 import com.luna.ai.design.theme.DeepBlack
+import com.luna.ai.design.theme.ElectricPurple
+import com.luna.ai.design.theme.PremiumWhite
 import com.luna.ai.feature.chat.components.ChatBubble
 import com.luna.ai.feature.chat.components.ChatInput
 
@@ -44,6 +49,7 @@ fun ChatScreen(
 ) {
     val messages by viewModel.messages.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
+    val selectedProvider by viewModel.selectedProvider.collectAsState()
     val listState = rememberLazyListState()
 
     LaunchedEffect(messages.size) {
@@ -89,6 +95,27 @@ fun ChatScreen(
                 }
             }
 
+            // AI Provider Toggle
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                    .background(Color(0xFF151520), RoundedCornerShape(12.dp))
+                    .padding(4.dp),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                ToggleButton(
+                    text = "DeepSeek",
+                    isSelected = selectedProvider == "DeepSeek",
+                    onClick = { viewModel.setProvider("DeepSeek") }
+                )
+                ToggleButton(
+                    text = "Gemini",
+                    isSelected = selectedProvider == "Gemini",
+                    onClick = { viewModel.setProvider("Gemini") }
+                )
+            }
+
             // চ্যাট লিস্ট
             LazyColumn(
                 state = listState,
@@ -125,5 +152,23 @@ fun ChatScreen(
                 }
             )
         }
+    }
+}
+
+@Composable
+fun ToggleButton(text: String, isSelected: Boolean, onClick: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .background(if (isSelected) ElectricPurple else Color.Transparent, RoundedCornerShape(8.dp))
+            .clickable { onClick() }
+            .padding(vertical = 8.dp, horizontal = 24.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = text,
+            color = if (isSelected) Color.White else Color.Gray,
+            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+            fontSize = 14.sp
+        )
     }
 }
