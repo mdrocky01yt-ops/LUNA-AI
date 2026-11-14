@@ -143,10 +143,10 @@ fun ChatScreen(
                 }
             }
 
-            // ইনপুট এরিয়া (নতুন প্যারামিটারসহ)
+            // ইনপুট এরিয়া
             ChatInput(
-                onSendMessage = { text, imageUri ->
-                    viewModel.sendMessage(text, imageUri)
+                onSendMessage = { text, base64Image ->
+                    viewModel.sendMessage(text, base64Image)
                 }
             )
         }
