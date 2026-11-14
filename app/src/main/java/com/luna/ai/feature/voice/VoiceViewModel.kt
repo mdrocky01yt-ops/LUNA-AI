@@ -44,7 +44,7 @@ class VoiceViewModel @Inject constructor(
             voiceManager.updateVoiceParameters(pitch, speed, name)
 
             val personality = dataStoreManager.aiPersonalityFlow.first()
-            val systemPrompt = "$personality\n\nIMPORTANT: Keep answers short. You can control the phone.\nIf user asks to do something, reply EXACTLY like: ACTION:OPEN_APP:package.name OR ACTION:READ_SCREEN OR ACTION:CLICK_TEXT:text OR ACTION:SCROLL_DOWN OR ACTION:BACK OR ACTION:FLASHLIGHT OR ACTION:BATTERY"
+            val systemPrompt = "$personality\n\nIMPORTANT: Keep answers short. You can control the phone.\nIf user asks to do something, reply EXACTLY like: ACTION:OPEN_APP:package.name OR ACTION:READ_SCREEN OR ACTION:CLICK_TEXT:text OR ACTION:SCROLL_DOWN OR ACTION:BACK OR ACTION:FLASHLIGHT OR ACTION:BATTERY OR ACTION:BRIGHTNESS_UP OR ACTION:BRIGHTNESS_DOWN OR ACTION:READ_NOTIFICATIONS"
             apiHistory.add(ChatMessage("system", systemPrompt))
         }
 
@@ -85,7 +85,8 @@ class VoiceViewModel @Inject constructor(
         apiHistory.add(ChatMessage("user", text))
 
         viewModelScope.launch {
-            val result = repository.sendMessage(apiHistory)
+            // এখানে "Gemini" পাস করা হলো
+            val result = repository.sendMessage(apiHistory, "Gemini")
             
             result.onSuccess { reply ->
                 var finalReply = reply
