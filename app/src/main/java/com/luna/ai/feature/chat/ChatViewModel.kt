@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import java.net.URLEncoder
 import javax.inject.Inject
 
 @HiltViewModel
@@ -40,7 +41,7 @@ class ChatViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             val personality = dataStoreManager.aiPersonalityFlow.first()
-            val systemPrompt = "$personality\n\nIMPORTANT: You can control the Android phone using Accessibility Service.\nIf user asks to do something on phone, reply EXACTLY like: ACTION:OPEN_APP:package.name OR ACTION:READ_SCREEN OR ACTION:CLICK_TEXT:text OR ACTION:SCROLL_DOWN OR ACTION:BACK OR ACTION:FLASHLIGHT OR ACTION:BATTERY"
+            val systemPrompt = "$personality\n\nIMPORTANT: You can control the Android phone using Accessibility Service.\nIf user asks to do something on phone, reply EXACTLY like: ACTION:OPEN_APP:package.name OR ACTION:READ_SCREEN OR ACTION:CLICK_TEXT:text OR ACTION:SCROLL_DOWN OR ACTION:BACK OR ACTION:FLASHLIGHT OR ACTION:BATTERY\n\nTo generate an image, reply EXACTLY: ACTION:GENERATE_IMAGE:prompt in English"
             apiHistory.add(ChatMessage("system", systemPrompt))
         }
     }
@@ -60,18 +61,24 @@ class ChatViewModel @Inject constructor(
             _isLoading.value = false
             
             result.onSuccess { reply ->
-                var finalReply = reply
+                var finalText = reply
+                var imageUrl: String? = null
                 
                 if (reply.contains("ACTION:")) {
-                    val actionResult = actionParser.executeAction(reply)
-                    finalReply = if (actionResult != null) {
-                        "✅ $actionResult"
+                    // ছবি বানানোর কমান্ড চেক
+                    if (reply.contains("ACTION:GENERATE_IMAGE:")) {
+                        val prompt = reply.substringAfter("ACTION:GENERATE_IMAGE:").trim()
+                        val encodedPrompt = URLEncoder.encode(prompt, "UTF-8")
+                        imageUrl = "https://image.pollinations.ai/prompt/$encodedPrompt"
+                        finalText = "এই যে আপনার ছবি, তৈরি করে দিয়েছি! 🎨"
                     } else {
-                        "❌ দুঃখিত, কাজটি করা সম্ভব হয়নি।"
+                        // অন্যান্য ফোন কমান্ড
+                        val actionResult = actionParser.executeAction(reply)
+                        finalText = if (actionResult != null) "✅ $actionResult" else "❌ দুঃখিত, কাজটি করা সম্ভব হয়নি।"
                     }
                 }
 
-                val lunaMsg = Message(text = finalReply, isFromUser = false)
+                val lunaMsg = Message(text = finalText, isFromUser = false, imageUrl = imageUrl)
                 chatDao.insertMessage(lunaMsg)
                 apiHistory.add(ChatMessage("assistant", reply))
             }.onFailure { error ->
@@ -86,7 +93,7 @@ class ChatViewModel @Inject constructor(
             chatDao.clearHistory()
             apiHistory.clear()
             val personality = dataStoreManager.aiPersonalityFlow.first()
-            val systemPrompt = "$personality\n\nIMPORTANT: You can control the Android phone using Accessibility Service.\nIf user asks to do something on phone, reply EXACTLY like: ACTION:OPEN_APP:package.name OR ACTION:READ_SCREEN OR ACTION:CLICK_TEXT:text OR ACTION:SCROLL_DOWN OR ACTION:BACK OR ACTION:FLASHLIGHT OR ACTION:BATTERY"
+            val systemPrompt = "$personality\n\nIMPORTANT: You can control the Android phone using Accessibility Service.\nIf user asks to do something on phone, reply EXACTLY like: ACTION:OPEN_APP:package.name OR ACTION:READ_SCREEN OR ACTION:CLICK_TEXT:text OR ACTION:SCROLL_DOWN OR ACTION:BACK OR ACTION:FLASHLIGHT OR ACTION:BATTERY\n\nTo generate an image, reply EXACTLY: ACTION:GENERATE_IMAGE:prompt in English"
             apiHistory.add(ChatMessage("system", systemPrompt))
         }
     }
