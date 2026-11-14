@@ -60,7 +60,7 @@ class ChatViewModel @Inject constructor(
             apiHistory.add(ChatMessage("user", finalUserText))
             _isLoading.value = true
 
-            // এখানে আর "Gemini" প্যারামিটার নেই
+            // এখানে শুধু history আর imageBase64 পাস হচ্ছে
             val result = repository.sendMessage(apiHistory, base64Image)
             
             _isLoading.value = false
