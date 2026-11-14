@@ -16,15 +16,15 @@ class AiRepository @Inject constructor(
     private val geminiService: GeminiService,
     private val dataStoreManager: DataStoreManager
 ) {
+    // provider প্যারামিটারটি সরিয়ে ফেলা হলো
     suspend fun sendMessage(
         history: List<ChatMessage>, 
-        provider: String, // এটি এখন আর ব্যবহার হবে না, কিন্তু ভিউমডেল এরর এড়াতে রাখা হলো
         imageBase64: String? = null 
     ): Result<String> {
         
         val geminiKeys = dataStoreManager.geminiKeysFlow.first()
         if (geminiKeys.isEmpty()) {
-            return Result.failure(Exception("Gemini API Key সেট করা হয়নি। API KEYS-এ গিয়ে Key বসান।"))
+            return Result.failure(Exception("Gemini API Key সেট করা হয়নি। API KEYS-এ গিয়ে Key বসান।"))
         }
 
         val lastUserMessage = history.lastOrNull { it.role == "user" }?.content ?: ""
@@ -40,8 +40,6 @@ class AiRepository @Inject constructor(
                 val request = GeminiRequest(
                     contents = listOf(GeminiContent(parts = parts))
                 )
-                
-                // গুগলের সার্ভারে রিকোয়েস্ট পাঠানো হচ্ছে
                 val response = geminiService.generateContent(apiKey = key, request = request)
                 val reply = response.candidates?.firstOrNull()?.content?.parts?.firstOrNull()?.text
                 
@@ -49,11 +47,10 @@ class AiRepository @Inject constructor(
                     return Result.success(reply)
                 }
             } catch (e: Exception) { 
-                // আসল এররটা লগে দেখা যাবে, কিন্তু ইউজারকে জানানোর জন্য নিচে পাঠানো হবে
                 return Result.failure(Exception("Network Error: ${e.message}"))
             }
         }
         
-        return Result.failure(Exception("Gemini API Key সঠিক নয়।"))
+        return Result.failure(Exception("Gemini API Key সঠিক নয়।"))
     }
 }
