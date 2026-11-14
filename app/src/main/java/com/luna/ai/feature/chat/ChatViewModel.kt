@@ -63,7 +63,6 @@ class ChatViewModel @Inject constructor(
                 var finalReply = reply
                 
                 if (reply.contains("ACTION:")) {
-                    // এখানে actionResult হলো String (যেমন: "অ্যাপ ওপেন করা হয়েছে।")
                     val actionResult = actionParser.executeAction(reply)
                     finalReply = if (actionResult != null) {
                         "✅ $actionResult"
