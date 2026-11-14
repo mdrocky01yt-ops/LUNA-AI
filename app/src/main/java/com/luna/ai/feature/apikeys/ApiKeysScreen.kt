@@ -3,7 +3,6 @@ package com.luna.ai.feature.apikeys
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -48,7 +47,6 @@ fun ApiKeysScreen(
     onBackClick: () -> Unit = {},
     viewModel: ApiKeyViewModel = hiltViewModel()
 ) {
-    val deepSeekKeys by viewModel.deepSeekKeys.collectAsState()
     val geminiKeys by viewModel.geminiKeys.collectAsState()
 
     Column(
@@ -75,14 +73,7 @@ fun ApiKeysScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             item {
-                ApiKeySection(
-                    title = "DeepSeek API Keys",
-                    keys = deepSeekKeys,
-                    onAdd = { viewModel.addDeepSeekKey(it) },
-                    onRemove = { viewModel.removeDeepSeekKey(it) }
-                )
-            }
-            item {
+                // শুধু জেমিনির সেকশন
                 ApiKeySection(
                     title = "Gemini API Keys",
                     keys = geminiKeys,
@@ -113,12 +104,11 @@ fun ApiKeySection(
         Text(text = title, color = CyanGlow, fontSize = 18.sp, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Key ইনপুট বক্স
         Row(verticalAlignment = Alignment.CenterVertically) {
             OutlinedTextField(
                 value = newKey,
                 onValueChange = { newKey = it },
-                placeholder = { Text("Paste API Key here...", color = Color.Gray, fontSize = 12.sp) },
+                placeholder = { Text("Paste Gemini API Key...", color = Color.Gray, fontSize = 12.sp) },
                 modifier = Modifier.weight(1f),
                 shape = RoundedCornerShape(12.dp),
                 colors = OutlinedTextFieldDefaults.colors(
@@ -144,7 +134,6 @@ fun ApiKeySection(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // যোগ করা Key-গুলোর লিস্ট
         if (keys.isEmpty()) {
             Text(text = "No keys added yet.", color = Color.Gray, fontSize = 12.sp)
         } else {
