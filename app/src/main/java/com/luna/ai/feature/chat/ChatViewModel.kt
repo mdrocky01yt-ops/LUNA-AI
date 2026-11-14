@@ -11,12 +11,15 @@ import com.luna.ai.core.device.ActionParser
 import com.luna.ai.core.model.Message
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.io.InputStream
 import java.net.URLEncoder
 import javax.inject.Inject
 
@@ -39,9 +42,6 @@ class ChatViewModel @Inject constructor(
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading
 
-    private val _selectedProvider = MutableStateFlow("DeepSeek")
-    val selectedProvider: StateFlow<String> = _selectedProvider
-
     private val apiHistory = mutableListOf<ChatMessage>()
 
     init {
@@ -52,25 +52,19 @@ class ChatViewModel @Inject constructor(
         }
     }
 
-    fun setProvider(provider: String) {
-        _selectedProvider.value = provider
-    }
-
     fun sendMessage(userText: String, base64Image: String?) {
         if (userText.isBlank() && base64Image == null) return
 
         viewModelScope.launch {
-            val finalUserText = if (userText.isBlank()) "এই ছবিতে কী আছে বিস্তারিত বুঝিয়ে বলো।" else userText
-            
-            val userMsg = Message(text = finalUserText, isFromUser = true, imageUrl = if (base64Image != null) "base64_image" else null)
+            val finalUserText = if (userText.isBlank()) "এই ছবিতে কী আছে বুঝিয়ে বলো।" else userText
+            val userMsg = Message(text = finalUserText, isFromUser = true, imageUrl = if (base64Image != null) "image_attached" else null)
             chatDao.insertMessage(userMsg)
 
             apiHistory.add(ChatMessage("user", finalUserText))
             _isLoading.value = true
 
-            // ছবি থাকলে জেমিনি বাধ্যতামূলক ব্যবহার হবে
-            val providerToUse = if (base64Image != null) "Gemini" else _selectedProvider.value
-            val result = repository.sendMessage(apiHistory, providerToUse, base64Image)
+            // শুধুমাত্র Gemini ব্যবহার হবে
+            val result = repository.sendMessage(apiHistory, "Gemini", base64Image)
             
             _isLoading.value = false
             
