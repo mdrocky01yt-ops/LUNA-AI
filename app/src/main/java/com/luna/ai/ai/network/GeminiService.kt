@@ -7,8 +7,8 @@ import retrofit2.http.POST
 import retrofit2.http.Query
 
 interface GeminiService {
-    // Gemini API-তে Key কুয়েরি প্যারামিটার হিসেবে যায়
-    @POST("v1beta/models/gemini-pro:generateContent")
+    // ২০২৬ সালের সর্বশেষ সক্রিয় মডেল
+    @POST("v1beta/models/gemini-3.8-flash:generateContent")
     suspend fun generateContent(
         @Query("key") apiKey: String,
         @Body request: GeminiRequest
