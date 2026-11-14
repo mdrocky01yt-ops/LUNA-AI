@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -45,7 +44,7 @@ import com.luna.ai.design.theme.ElectricPurple
 import com.luna.ai.design.theme.PremiumWhite
 import com.luna.ai.voice.VoiceManager
 
-// ডাটা ক্লাস সরাসরি এই ফাইলের ভেতরে
+// ডাটা ক্লাস এই ফাইলের ভেতরেই ডিক্লেয়ার করা হলো
 data class VoiceProfile(
     val name: String,
     val pitch: Float,
@@ -69,7 +68,7 @@ fun VoiceChangerScreen(
     val context = LocalContext.current
     val voiceManager = remember { VoiceManager(context) }
 
-    // ডাটা সরাসরি এখানে তৈরি (১০টি মেয়ে, ২টি ছেলে)
+    // ১২টি কণ্ঠস্বরের লিস্ট
     val voiceProfiles = listOf(
         VoiceProfile("Luna Default", 1.0f, 1.0f, "Soft & Friendly"),
         VoiceProfile("Cute Girl", 1.3f, 1.1f, "Playful"),
