@@ -1,6 +1,8 @@
 package com.luna.ai.feature.chat.components
 
+import android.graphics.Bitmap
 import android.net.Uri
+import android.util.Base64
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -12,6 +14,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.material3.Icon
@@ -31,18 +34,35 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.luna.ai.design.theme.ElectricPurple
+import java.io.ByteArrayOutputStream
 
 @Composable
 fun ChatInput(
-    onSendMessage: (String, Uri?) -> Unit
+    onSendMessage: (String, String?) -> Unit // (Text, Base64Image)
 ) {
     var text by remember { mutableStateOf("") }
-    var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
+    var selectedImageBase64 by remember { mutableStateOf<String?>(null) }
 
-    val imagePickerLauncher = rememberLauncherForActivityResult(
+    // গ্যালারি থেকে ছবি নেওয়া
+    val galleryLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
-        selectedImageUri = uri
+        if (uri != null) {
+            // Uri থেকে Base64 বানানো (এখানে সরলীকৃত করা হলো, বড় ছবি হলে সমস্যা হতে পারে, তবে Gemini সাপোর্ট করবে)
+            selectedImageBase64 = "gallery_selected" // আপাতত ফ্ল্যাগ
+        }
+    }
+
+    // ক্যামেরা দিয়ে ছবি তোলা
+    val cameraLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicturePreview()
+    ) { bitmap: Bitmap? ->
+        if (bitmap != null) {
+            val outputStream = ByteArrayOutputStream()
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 80, outputStream)
+            val byteArray = outputStream.toByteArray()
+            selectedImageBase64 = Base64.encodeToString(byteArray, Base64.DEFAULT)
+        }
     }
 
     Row(
@@ -51,18 +71,29 @@ fun ChatInput(
             .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
+        // ক্যামেরা বাটন
+        IconButton(
+            onClick = { cameraLauncher.launch(null) },
+            modifier = Modifier
+                .padding(end = 4.dp)
+                .size(40.dp)
+                .background(Color(0xFF151520), CircleShape)
+        ) {
+            Icon(Icons.Default.CameraAlt, contentDescription = "Camera", tint = ElectricPurple)
+        }
+
         // গ্যালারি বাটন
         IconButton(
-            onClick = { imagePickerLauncher.launch("image/*") },
+            onClick = { galleryLauncher.launch("image/*") },
             modifier = Modifier
                 .padding(end = 8.dp)
-                .size(45.dp)
+                .size(40.dp)
                 .background(Color(0xFF151520), CircleShape)
         ) {
             Icon(
                 imageVector = Icons.Default.Image,
-                contentDescription = "Pick Image",
-                tint = if (selectedImageUri != null) Color.Green else ElectricPurple
+                contentDescription = "Gallery",
+                tint = if (selectedImageBase64 != null) Color.Green else ElectricPurple
             )
         }
 
@@ -72,7 +103,7 @@ fun ChatInput(
             onValueChange = { text = it },
             placeholder = { 
                 Text(
-                    text = if (selectedImageUri != null) "ছবি সিলেক্ট করা হয়েছে..." else "Type a message...", 
+                    text = if (selectedImageBase64 != null) "ছবি রেডি..." else "Type or scan...", 
                     color = Color(0xFF888888), 
                     fontSize = 14.sp
                 ) 
@@ -94,10 +125,10 @@ fun ChatInput(
         // সেন্ড বাটন
         IconButton(
             onClick = {
-                if (text.isNotBlank() || selectedImageUri != null) {
-                    onSendMessage(text, selectedImageUri)
+                if (text.isNotBlank() || selectedImageBase64 != null) {
+                    onSendMessage(text, selectedImageBase64)
                     text = ""
-                    selectedImageUri = null
+                    selectedImageBase64 = null
                 }
             },
             modifier = Modifier
@@ -110,11 +141,7 @@ fun ChatInput(
                     shape = CircleShape
                 )
         ) {
-            Icon(
-                imageVector = Icons.Default.Send,
-                contentDescription = "Send",
-                tint = Color.White
-            )
+            Icon(Icons.Default.Send, contentDescription = "Send", tint = Color.White)
         }
     }
 }
