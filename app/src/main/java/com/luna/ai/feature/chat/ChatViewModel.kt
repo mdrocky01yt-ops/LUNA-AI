@@ -11,15 +11,12 @@ import com.luna.ai.core.device.ActionParser
 import com.luna.ai.core.model.Message
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import java.io.InputStream
 import java.net.URLEncoder
 import javax.inject.Inject
 
@@ -63,8 +60,8 @@ class ChatViewModel @Inject constructor(
             apiHistory.add(ChatMessage("user", finalUserText))
             _isLoading.value = true
 
-            // শুধুমাত্র Gemini ব্যবহার হবে
-            val result = repository.sendMessage(apiHistory, "Gemini", base64Image)
+            // এখানে আর "Gemini" প্যারামিটার নেই
+            val result = repository.sendMessage(apiHistory, base64Image)
             
             _isLoading.value = false
             
