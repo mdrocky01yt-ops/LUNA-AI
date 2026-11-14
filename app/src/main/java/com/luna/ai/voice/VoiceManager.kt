@@ -8,6 +8,7 @@ import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
+import android.speech.tts.Voice
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import java.util.Locale
@@ -20,17 +21,15 @@ class VoiceManager(private val context: Context) {
     private val _isListening = MutableStateFlow(false)
     val isListening: StateFlow<Boolean> = _isListening
 
-    private val _spokenText = MutableStateFlow("")
-    val spokenText: StateFlow<String> = _spokenText
-
     private val _isSpeaking = MutableStateFlow(false)
     val isSpeaking: StateFlow<Boolean> = _isSpeaking
 
-    private var onSpeechResult: ((String) -> Unit)? = null
-    private var onSpeechEnd: (() -> Unit)? = null
-    
+    // অটো লিসেনিং-এর জন্য কলব্যাক
+    var onTtsFinished: (() -> Unit)? = null 
+
     private var currentPitch = 1.0f
     private var currentSpeed = 1.0f
+    private var currentVoiceName = "Luna Default"
 
     init {
         initTTS()
@@ -46,22 +45,40 @@ class VoiceManager(private val context: Context) {
                 
                 textToSpeech?.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
                     override fun onStart(utteranceId: String?) { _isSpeaking.value = true }
-                    override fun onDone(utteranceId: String?) { _isSpeaking.value = false }
-                    override fun onError(utteranceId: String?) { _isSpeaking.value = false }
+                    override fun onDone(utteranceId: String?) { 
+                        _isSpeaking.value = false 
+                        // লুনা কথা বলা শেষ করলে মাইক আবার চালু হবে
+                        onTtsFinished?.invoke()
+                    }
+                    override fun onError(utteranceId: String?) { 
+                        _isSpeaking.value = false 
+                        onTtsFinished?.invoke()
+                    }
                 })
             }
         }
     }
 
-    fun updateVoiceParameters(pitch: Float, speed: Float) {
+    fun updateVoiceParameters(pitch: Float, speed: Float, voiceName: String) {
         currentPitch = pitch
         currentSpeed = speed
+        currentVoiceName = voiceName
     }
 
     fun speak(text: String) {
         _isSpeaking.value = true
         textToSpeech?.setPitch(currentPitch)
         textToSpeech?.setSpeechRate(currentSpeed)
+        
+        // যদি ডিভাইসে এই নামের ভয়েস থাকে, তবে সেটা সেট করার চেষ্টা করবে
+        val voices = textToSpeech?.voices
+        if (voices != null) {
+            val selectedVoice = voices.find { it.name == currentVoiceName }
+            if (selectedVoice != null) {
+                textToSpeech?.voice = selectedVoice
+            }
+        }
+
         val params = Bundle()
         textToSpeech?.speak(text, TextToSpeech.QUEUE_FLUSH, params, "LunaSpeak")
     }
@@ -72,8 +89,7 @@ class VoiceManager(private val context: Context) {
     }
 
     fun startListening(onResult: (String) -> Unit, onEnd: () -> Unit) {
-        this.onSpeechResult = onResult
-        this.onSpeechEnd = onEnd
+        if (_isSpeaking.value) return // যদি লুনা নিজেই কথা বলে, তবে মাইক অন হবে না
 
         if (SpeechRecognizer.isRecognitionAvailable(context)) {
             speechRecognizer = SpeechRecognizer.createSpeechRecognizer(context)
@@ -83,12 +99,14 @@ class VoiceManager(private val context: Context) {
                 override fun onRmsChanged(rmsdB: Float) {}
                 override fun onBufferReceived(buffer: ByteArray?) {}
                 override fun onEndOfSpeech() { _isListening.value = false }
-                override fun onError(error: Int) { _isListening.value = false; onSpeechEnd?.invoke() }
+                override fun onError(error: Int) { 
+                    _isListening.value = false
+                    onEnd()
+                }
                 override fun onResults(results: Bundle?) {
                     val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
                     if (!matches.isNullOrEmpty()) {
-                        _spokenText.value = matches[0]
-                        onSpeechResult?.invoke(matches[0])
+                        onResult(matches[0])
                     }
                     _isListening.value = false
                 }
@@ -99,11 +117,12 @@ class VoiceManager(private val context: Context) {
             val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
                 putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
                 putExtra(RecognizerIntent.EXTRA_LANGUAGE, "bn-BD")
+                putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, Locale.getDefault())
             }
             speechRecognizer?.startListening(intent)
         } else {
             _isListening.value = false
-            onSpeechEnd?.invoke()
+            onEnd()
         }
     }
 
@@ -117,4 +136,31 @@ class VoiceManager(private val context: Context) {
         textToSpeech?.stop()
         textToSpeech?.shutdown()
     }
+    
+    // ১২টি ভয়েস প্রোফাইল জেনারেট করা
+    fun getAvailableVoiceProfiles(): List<VoiceProfile> {
+        return listOf(
+            VoiceProfile("Luna Default", 1.0f, 1.0f, "Soft & Friendly"),
+            VoiceProfile("Cute Girl", 1.3f, 1.1f, "Playful"),
+            VoiceProfile("Professional", 0.9f, 1.0f, "Confident"),
+            VoiceProfile("Relaxed", 0.95f, 0.9f, "Calm"),
+            VoiceProfile("Energetic", 1.1f, 1.2f, "Excited"),
+            VoiceProfile("Storyteller", 0.9f, 0.95f, "Slow & Clear"),
+            VoiceProfile("Whisper", 0.85f, 0.8f, "Very Soft"),
+            VoiceProfile("Sweet", 1.2f, 1.0f, "Pleasant"),
+            VoiceProfile("Robot", 0.7f, 1.1f, "Mechanical"),
+            VoiceProfile("Deep Voice", 0.6f, 0.9f, "Heavy"),
+            // ২টি ছেলেলি কণ্ঠস্বর
+            VoiceProfile("Male Calm", 0.8f, 0.9f, "Calm Male"),
+            VoiceProfile("Male Energetic", 0.85f, 1.1f, "Energetic Male")
+        )
+    }
 }
+
+// ডাটা ক্লাস
+data class VoiceProfile(
+    val name: String,
+    val pitch: Float,
+    val speed: Float,
+    val description: String
+)
