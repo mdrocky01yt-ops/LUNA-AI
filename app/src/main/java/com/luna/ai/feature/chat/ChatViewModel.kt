@@ -1,8 +1,6 @@
 package com.luna.ai.feature.chat
 
 import android.content.Context
-import android.net.Uri
-import android.util.Base64
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.luna.ai.ai.model.ChatMessage
@@ -13,15 +11,12 @@ import com.luna.ai.core.device.ActionParser
 import com.luna.ai.core.model.Message
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import java.io.InputStream
 import java.net.URLEncoder
 import javax.inject.Inject
 
@@ -61,34 +56,21 @@ class ChatViewModel @Inject constructor(
         _selectedProvider.value = provider
     }
 
-    fun sendMessage(userText: String, imageUri: Uri?) {
-        if (userText.isBlank() && imageUri == null) return
+    fun sendMessage(userText: String, base64Image: String?) {
+        if (userText.isBlank() && base64Image == null) return
 
         viewModelScope.launch {
-            val finalUserText = if (userText.isBlank()) "এই ছবিতে কী আছে বুঝিয়ে বলো।" else userText
+            val finalUserText = if (userText.isBlank()) "এই ছবিতে কী আছে বিস্তারিত বুঝিয়ে বলো।" else userText
             
-            val userMsg = Message(text = finalUserText, isFromUser = true, imageUrl = imageUri?.toString())
+            val userMsg = Message(text = finalUserText, isFromUser = true, imageUrl = if (base64Image != null) "base64_image" else null)
             chatDao.insertMessage(userMsg)
 
             apiHistory.add(ChatMessage("user", finalUserText))
             _isLoading.value = true
 
-            // ছবিকে Base64-এ কনভার্ট করা
-            var base64Image: String? = null
-            if (imageUri != null) {
-                base64Image = withContext(Dispatchers.IO) {
-                    try {
-                        val inputStream: InputStream? = context.contentResolver.openInputStream(imageUri)
-                        val bytes = inputStream?.readBytes()
-                        Base64.encodeToString(bytes, Base64.DEFAULT)
-                    } catch (e: Exception) {
-                        null
-                    }
-                }
-            }
-
-            // এখানে ছবি থাকলে অটো Gemini-তে যাবে
-            val result = repository.sendMessage(apiHistory, _selectedProvider.value, base64Image)
+            // ছবি থাকলে জেমিনি বাধ্যতামূলক ব্যবহার হবে
+            val providerToUse = if (base64Image != null) "Gemini" else _selectedProvider.value
+            val result = repository.sendMessage(apiHistory, providerToUse, base64Image)
             
             _isLoading.value = false
             
