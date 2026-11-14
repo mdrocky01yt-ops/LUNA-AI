@@ -1,6 +1,7 @@
 package com.luna.ai.core.device
 
 import android.content.Context
+import com.luna.ai.service.LunaAccessibilityService
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -11,33 +12,54 @@ class ActionParser @Inject constructor(
 ) {
     private val deviceController = DeviceController(context)
 
-    fun executeAction(aiResponse: String): Boolean {
-        // AI যদি এই ফরম্যাটে উত্তর দেয়: "ACTION:OPEN_APP:com.whatsapp"
+    fun executeAction(aiResponse: String): String? {
+        // ১. অ্যাপ ওপেন করা
         if (aiResponse.contains("ACTION:OPEN_APP:")) {
             val appPackage = aiResponse.substringAfter("ACTION:OPEN_APP:").substringBefore(" ").trim()
-            return deviceController.openApp(appPackage)
+            deviceController.openApp(appPackage)
+            return "অ্যাপ ওপেন করা হয়েছে।"
         }
 
+        // ২. টর্চ
         if (aiResponse.contains("ACTION:FLASHLIGHT")) {
             deviceController.toggleFlashlight()
-            return true
+            return "টর্চ পরিবর্তন করা হয়েছে।"
         }
-
-        if (aiResponse.contains("ACTION:VOLUME_UP")) {
-            deviceController.changeVolume(true)
-            return true
-        }
-
-        if (aiResponse.contains("ACTION:VOLUME_DOWN")) {
-            deviceController.changeVolume(false)
-            return true
-        }
-
+        
+        // ৩. ব্যাটারি
         if (aiResponse.contains("ACTION:BATTERY")) {
-            deviceController.showToast("Battery: ${deviceController.getBatteryLevel()}%")
-            return true
+            return "আপনার ব্যাটারি: ${deviceController.getBatteryLevel()}%"
         }
 
-        return false
+        // ৪. স্ক্রিন রিডিং
+        if (aiResponse.contains("ACTION:READ_SCREEN")) {
+            val screenText = LunaAccessibilityService.instance?.getScreenText() ?: "অ্যাক্সেসিবিলিটি পারমিশন দেওয়া নেই।"
+            return "স্ক্রিনে লেখা আছে:\n$screenText"
+        }
+
+        // ৫. টেক্সট ক্লিক
+        if (aiResponse.contains("ACTION:CLICK_TEXT:")) {
+            val textToClick = aiResponse.substringAfter("ACTION:CLICK_TEXT:").substringBefore("ACTION").trim()
+            val success = LunaAccessibilityService.instance?.clickByText(textToClick) ?: false
+            return if (success) "$textToClick-তে ক্লিক করা হয়েছে।" else "ক্লিক করা সম্ভব হয়নি।"
+        }
+
+        // ৬. স্ক্রল
+        if (aiResponse.contains("ACTION:SCROLL_DOWN")) {
+            LunaAccessibilityService.instance?.scrollScreen(true)
+            return "স্ক্রল ডাউন করা হয়েছে।"
+        }
+        if (aiResponse.contains("ACTION:SCROLL_UP")) {
+            LunaAccessibilityService.instance?.scrollScreen(false)
+            return "স্ক্রল আপ করা হয়েছে।"
+        }
+
+        // ৭. ব্যাক
+        if (aiResponse.contains("ACTION:BACK")) {
+            LunaAccessibilityService.instance?.performGlobalBack()
+            return "ব্যাক করা হয়েছে।"
+        }
+
+        return null // কোনো অ্যাকশন পাওয়া যায়নি
     }
 }
