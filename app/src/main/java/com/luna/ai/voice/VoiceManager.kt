@@ -8,7 +8,6 @@ import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
-import android.speech.tts.Voice
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import java.util.Locale
@@ -24,7 +23,6 @@ class VoiceManager(private val context: Context) {
     private val _isSpeaking = MutableStateFlow(false)
     val isSpeaking: StateFlow<Boolean> = _isSpeaking
 
-    // অটো লিসেনিং-এর জন্য কলব্যাক
     var onTtsFinished: (() -> Unit)? = null 
 
     private var currentPitch = 1.0f
@@ -47,7 +45,6 @@ class VoiceManager(private val context: Context) {
                     override fun onStart(utteranceId: String?) { _isSpeaking.value = true }
                     override fun onDone(utteranceId: String?) { 
                         _isSpeaking.value = false 
-                        // লুনা কথা বলা শেষ করলে মাইক আবার চালু হবে
                         onTtsFinished?.invoke()
                     }
                     override fun onError(utteranceId: String?) { 
@@ -70,7 +67,6 @@ class VoiceManager(private val context: Context) {
         textToSpeech?.setPitch(currentPitch)
         textToSpeech?.setSpeechRate(currentSpeed)
         
-        // যদি ডিভাইসে এই নামের ভয়েস থাকে, তবে সেটা সেট করার চেষ্টা করবে
         val voices = textToSpeech?.voices
         if (voices != null) {
             val selectedVoice = voices.find { it.name == currentVoiceName }
@@ -89,7 +85,7 @@ class VoiceManager(private val context: Context) {
     }
 
     fun startListening(onResult: (String) -> Unit, onEnd: () -> Unit) {
-        if (_isSpeaking.value) return // যদি লুনা নিজেই কথা বলে, তবে মাইক অন হবে না
+        if (_isSpeaking.value) return 
 
         if (SpeechRecognizer.isRecognitionAvailable(context)) {
             speechRecognizer = SpeechRecognizer.createSpeechRecognizer(context)
@@ -137,7 +133,6 @@ class VoiceManager(private val context: Context) {
         textToSpeech?.shutdown()
     }
     
-    // ১২টি ভয়েস প্রোফাইল জেনারেট করা
     fun getAvailableVoiceProfiles(): List<VoiceProfile> {
         return listOf(
             VoiceProfile("Luna Default", 1.0f, 1.0f, "Soft & Friendly"),
@@ -150,17 +145,8 @@ class VoiceManager(private val context: Context) {
             VoiceProfile("Sweet", 1.2f, 1.0f, "Pleasant"),
             VoiceProfile("Robot", 0.7f, 1.1f, "Mechanical"),
             VoiceProfile("Deep Voice", 0.6f, 0.9f, "Heavy"),
-            // ২টি ছেলেলি কণ্ঠস্বর
             VoiceProfile("Male Calm", 0.8f, 0.9f, "Calm Male"),
             VoiceProfile("Male Energetic", 0.85f, 1.1f, "Energetic Male")
         )
     }
 }
-
-// ডাটা ক্লাস
-data class VoiceProfile(
-    val name: String,
-    val pitch: Float,
-    val speed: Float,
-    val description: String
-)
