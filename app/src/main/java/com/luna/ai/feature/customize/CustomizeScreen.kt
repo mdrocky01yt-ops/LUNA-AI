@@ -14,7 +14,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ColorLens
-import androidx.compose.material.icons.filled.Face
 import androidx.compose.material.icons.filled.Waves
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -41,6 +40,7 @@ import com.luna.ai.design.theme.PremiumWhite
 fun CustomizeScreen(onBackClick: () -> Unit = {}) {
     var isGlowEnabled by remember { mutableStateOf(true) }
     var isAnimationEnabled by remember { mutableStateOf(true) }
+    var isSoundEnabled by remember { mutableStateOf(true) }
 
     Column(
         modifier = Modifier.fillMaxSize().background(DeepBlack).padding(top = 24.dp)
@@ -109,18 +109,29 @@ fun CustomizeScreen(onBackClick: () -> Unit = {}) {
                     colors = SwitchDefaults.colors(checkedThumbColor = CyanGlow, checkedTrackColor = ElectricPurple)
                 )
             }
-
-            // আপাতত ইনফো মেসেজ
+            
+            // সাউন্ড ইফেক্ট
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(Color(0xFF151520), RoundedCornerShape(16.dp))
                     .padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Icon(Icons.Default.Face, contentDescription = "Avatar", tint = CyanGlow, modifier = Modifier.size(28.dp))
-                Spacer(modifier = Modifier.size(16.dp))
-                Text(text = "Avatar Customization (Coming in next update)", color = Color.Gray, fontSize = 14.sp)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.Waves, contentDescription = "Sound", tint = CyanGlow, modifier = Modifier.size(28.dp))
+                    Spacer(modifier = Modifier.size(16.dp))
+                    Column {
+                        Text(text = "Sound Effects", color = PremiumWhite, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                        Text(text = "বাটনে ক্লিক করলে সাউন্ড হবে", color = Color.Gray, fontSize = 12.sp)
+                    }
+                }
+                Switch(
+                    checked = isSoundEnabled,
+                    onCheckedChange = { isSoundEnabled = it },
+                    colors = SwitchDefaults.colors(checkedThumbColor = CyanGlow, checkedTrackColor = ElectricPurple)
+                )
             }
         }
     }
