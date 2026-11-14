@@ -1,8 +1,10 @@
 package com.luna.ai.feature.chat.components
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -10,7 +12,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -32,9 +34,16 @@ import com.luna.ai.design.theme.ElectricPurple
 
 @Composable
 fun ChatInput(
-    onSendMessage: (String) -> Unit
+    onSendMessage: (String, Uri?) -> Unit
 ) {
     var text by remember { mutableStateOf("") }
+    var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
+
+    val imagePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        selectedImageUri = uri
+    }
 
     Row(
         modifier = Modifier
@@ -42,11 +51,32 @@ fun ChatInput(
             .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
+        // গ্যালারি বাটন
+        IconButton(
+            onClick = { imagePickerLauncher.launch("image/*") },
+            modifier = Modifier
+                .padding(end = 8.dp)
+                .size(45.dp)
+                .background(Color(0xFF151520), CircleShape)
+        ) {
+            Icon(
+                imageVector = Icons.Default.Image,
+                contentDescription = "Pick Image",
+                tint = if (selectedImageUri != null) Color.Green else ElectricPurple
+            )
+        }
+
         // ইনপুট বক্স
         TextField(
             value = text,
             onValueChange = { text = it },
-            placeholder = { Text("Type or speak...", color = Color(0xFF888888), fontSize = 14.sp) },
+            placeholder = { 
+                Text(
+                    text = if (selectedImageUri != null) "ছবি সিলেক্ট করা হয়েছে..." else "Type a message...", 
+                    color = Color(0xFF888888), 
+                    fontSize = 14.sp
+                ) 
+            },
             modifier = Modifier
                 .weight(1f)
                 .background(Color(0xFF151520), RoundedCornerShape(24.dp))
@@ -58,22 +88,16 @@ fun ChatInput(
                 unfocusedIndicatorColor = Color.Transparent,
                 focusedTextColor = Color.White,
                 unfocusedTextColor = Color.White
-            ),
-            trailingIcon = {
-                Icon(
-                    imageVector = Icons.Default.Mic,
-                    contentDescription = "Mic",
-                    tint = ElectricPurple
-                )
-            }
+            )
         )
 
         // সেন্ড বাটন
         IconButton(
             onClick = {
-                if (text.isNotBlank()) {
-                    onSendMessage(text)
+                if (text.isNotBlank() || selectedImageUri != null) {
+                    onSendMessage(text, selectedImageUri)
                     text = ""
+                    selectedImageUri = null
                 }
             },
             modifier = Modifier
