@@ -1,6 +1,5 @@
 package com.luna.ai.core.di
 
-import com.luna.ai.ai.network.DeepSeekService
 import com.luna.ai.ai.network.GeminiService
 import com.luna.ai.feature.headlines.NewsService
 import dagger.Module
@@ -34,17 +33,6 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun provideDeepSeekService(okHttpClient: OkHttpClient): DeepSeekService {
-        return Retrofit.Builder()
-            .baseUrl("https://api.deepseek.com/")
-            .client(okHttpClient)
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-            .create(DeepSeekService::class.java)
-    }
-
-    @Provides
-    @Singleton
     fun provideGeminiService(okHttpClient: OkHttpClient): GeminiService {
         return Retrofit.Builder()
             .baseUrl("https://generativelanguage.googleapis.com/")
@@ -54,7 +42,6 @@ object NetworkModule {
             .create(GeminiService::class.java)
     }
 
-    // খবরের জন্য নতুন সার্ভিস
     @Provides
     @Singleton
     fun provideNewsService(okHttpClient: OkHttpClient): NewsService {
