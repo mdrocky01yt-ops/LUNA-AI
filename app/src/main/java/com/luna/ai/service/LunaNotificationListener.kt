@@ -7,18 +7,20 @@ import android.util.Log
 
 class LunaNotificationListener : NotificationListenerService() {
 
+    companion object {
+        var latestNotificationText: String = "No recent notifications."
+    }
+
     override fun onNotificationPosted(sbn: StatusBarNotification?) {
         super.onNotificationPosted(sbn)
         if (sbn == null) return
 
         val extras = sbn.notification.extras
-        val appName = sbn.packageName
-        val title = extras.getString(Notification.EXTRA_TITLE) ?: ""
-        val text = extras.getString(Notification.EXTRA_TEXT) ?: ""
+        val title = extras.getString(Notification.EXTRA_TITLE) ?: "Unknown"
+        val text = extras.getString(Notification.EXTRA_TEXT) ?: "No content"
 
-        // এখানে আমরা নোটিফিকেশনটি ধরতে পারছি
-        // ভবিষ্যতে এই ডাটা আমরা এআই-কে পাঠাতে পারবো
-        Log.d("LunaNotification", "App: $appName, Title: $title, Text: $text")
+        latestNotificationText = "App: ${sbn.packageName}, Title: $title, Text: $text"
+        Log.d("LunaNotification", latestNotificationText)
     }
 
     override fun onNotificationRemoved(sbn: StatusBarNotification?) {
