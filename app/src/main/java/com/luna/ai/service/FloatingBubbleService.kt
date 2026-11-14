@@ -12,7 +12,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -25,7 +24,6 @@ import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.MicOff
 import androidx.compose.material.icons.filled.OpenInNew
 import androidx.compose.material3.Icon
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -37,11 +35,11 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.LifecycleService
 import com.luna.ai.MainActivity
 import com.luna.ai.design.theme.CyanGlow
 import com.luna.ai.design.theme.ElectricPurple
+import com.luna.ai.design.theme.PremiumWhite // এই লাইনটি আগে মিসিং ছিল
 
 class FloatingBubbleService : LifecycleService() {
 
@@ -91,13 +89,12 @@ class FloatingBubbleService : LifecycleService() {
                                 modifier = Modifier.size(28.dp).clickable { isMuted = !isMuted }
                             )
                             
-                            // মিনি চ্যাট (ভবিষ্যতে এখানে নতুন স্ক্রিন বা ডায়ালগ আসবে)
+                            // মিনি চ্যাট
                             Icon(
                                 imageVector = Icons.Default.Chat,
                                 contentDescription = "Chat",
                                 tint = CyanGlow,
                                 modifier = Modifier.size(28.dp).clickable {
-                                    // আপাতত অ্যাপ ওপেন হবে
                                     val intent = Intent(this@FloatingBubbleService, MainActivity::class.java)
                                     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                                     startActivity(intent)
@@ -154,7 +151,7 @@ class FloatingBubbleService : LifecycleService() {
                             initialY = params.y
                             initialTouchX = event.rawX
                             initialTouchY = event.rawY
-                            return false // ক্লিক কাজ করার জন্য false রিটার্ন করছে
+                            return false 
                         }
                         MotionEvent.ACTION_MOVE -> {
                             params.x = initialX + (initialTouchX - event.rawX).toInt()
