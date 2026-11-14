@@ -16,7 +16,7 @@ class AiRepository @Inject constructor(
     private val geminiService: GeminiService,
     private val dataStoreManager: DataStoreManager
 ) {
-    // provider প্যারামিটারটি সরিয়ে ফেলা হলো
+    // এখানে provider প্যারামিটার নেই, শুধু history আর imageBase64
     suspend fun sendMessage(
         history: List<ChatMessage>, 
         imageBase64: String? = null 
@@ -24,7 +24,7 @@ class AiRepository @Inject constructor(
         
         val geminiKeys = dataStoreManager.geminiKeysFlow.first()
         if (geminiKeys.isEmpty()) {
-            return Result.failure(Exception("Gemini API Key সেট করা হয়নি। API KEYS-এ গিয়ে Key বসান।"))
+            return Result.failure(Exception("Gemini API Key সেট করা হয়নি। API KEYS-এ গিয়ে Key বসান।"))
         }
 
         val lastUserMessage = history.lastOrNull { it.role == "user" }?.content ?: ""
@@ -51,6 +51,6 @@ class AiRepository @Inject constructor(
             }
         }
         
-        return Result.failure(Exception("Gemini API Key সঠিক নয়।"))
+        return Result.failure(Exception("Gemini API Key সঠিক নয়।"))
     }
 }
