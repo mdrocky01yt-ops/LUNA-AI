@@ -40,7 +40,8 @@ class SilentViewModel @Inject constructor(
         _isLoading.value = true
 
         viewModelScope.launch {
-            val result = repository.sendMessage(apiHistory)
+            // এখানে "DeepSeek" পাস করা হলো
+            val result = repository.sendMessage(apiHistory, "DeepSeek")
             
             _isLoading.value = false
             
@@ -49,7 +50,6 @@ class SilentViewModel @Inject constructor(
                 
                 if (reply.contains("ACTION:")) {
                     val actionExecuted = actionParser.executeAction(reply)
-                    // এখানে Boolean এর বদলে String? চেক করা হচ্ছে
                     if (actionExecuted != null) {
                         finalReply = "✅ $actionExecuted"
                     } else {
