@@ -1,5 +1,8 @@
 package com.luna.ai.feature.chat
 
+import android.content.Context
+import android.net.Uri
+import android.util.Base64
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.luna.ai.ai.model.ChatMessage
@@ -9,17 +12,22 @@ import com.luna.ai.core.datastore.DataStoreManager
 import com.luna.ai.core.device.ActionParser
 import com.luna.ai.core.model.Message
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.io.InputStream
 import java.net.URLEncoder
 import javax.inject.Inject
 
 @HiltViewModel
 class ChatViewModel @Inject constructor(
+    @ApplicationContext private val context: Context,
     private val repository: AiRepository,
     private val chatDao: ChatDao,
     private val actionParser: ActionParser,
@@ -36,7 +44,6 @@ class ChatViewModel @Inject constructor(
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading
 
-    // ডিফল্ট প্রোভাইডার DeepSeek
     private val _selectedProvider = MutableStateFlow("DeepSeek")
     val selectedProvider: StateFlow<String> = _selectedProvider
 
@@ -54,30 +61,46 @@ class ChatViewModel @Inject constructor(
         _selectedProvider.value = provider
     }
 
-    fun sendMessage(userText: String) {
-        if (userText.isBlank()) return
+    fun sendMessage(userText: String, imageUri: Uri?) {
+        if (userText.isBlank() && imageUri == null) return
 
         viewModelScope.launch {
-            val userMsg = Message(text = userText, isFromUser = true)
+            val finalUserText = if (userText.isBlank()) "এই ছবিতে কী আছে বুঝিয়ে বলো।" else userText
+            
+            val userMsg = Message(text = finalUserText, isFromUser = true, imageUrl = imageUri?.toString())
             chatDao.insertMessage(userMsg)
 
-            apiHistory.add(ChatMessage("user", userText))
+            apiHistory.add(ChatMessage("user", finalUserText))
             _isLoading.value = true
 
-            // সিলেক্ট করা প্রোভাইডার পাঠানো হলো
-            val result = repository.sendMessage(apiHistory, _selectedProvider.value)
+            // ছবিকে Base64-এ কনভার্ট করা
+            var base64Image: String? = null
+            if (imageUri != null) {
+                base64Image = withContext(Dispatchers.IO) {
+                    try {
+                        val inputStream: InputStream? = context.contentResolver.openInputStream(imageUri)
+                        val bytes = inputStream?.readBytes()
+                        Base64.encodeToString(bytes, Base64.DEFAULT)
+                    } catch (e: Exception) {
+                        null
+                    }
+                }
+            }
+
+            // এখানে ছবি থাকলে অটো Gemini-তে যাবে
+            val result = repository.sendMessage(apiHistory, _selectedProvider.value, base64Image)
             
             _isLoading.value = false
             
             result.onSuccess { reply ->
                 var finalText = reply
-                var imageUrl: String? = null
+                var generatedImageUrl: String? = null
                 
                 if (reply.contains("ACTION:")) {
                     if (reply.contains("ACTION:GENERATE_IMAGE:")) {
                         val prompt = reply.substringAfter("ACTION:GENERATE_IMAGE:").trim()
                         val encodedPrompt = URLEncoder.encode(prompt, "UTF-8")
-                        imageUrl = "https://image.pollinations.ai/prompt/$encodedPrompt"
+                        generatedImageUrl = "https://image.pollinations.ai/prompt/$encodedPrompt"
                         finalText = "এই যে আপনার ছবি, তৈরি করে দিয়েছি! 🎨"
                     } else {
                         val actionResult = actionParser.executeAction(reply)
@@ -85,7 +108,7 @@ class ChatViewModel @Inject constructor(
                     }
                 }
 
-                val lunaMsg = Message(text = finalText, isFromUser = false, imageUrl = imageUrl)
+                val lunaMsg = Message(text = finalText, isFromUser = false, imageUrl = generatedImageUrl)
                 chatDao.insertMessage(lunaMsg)
                 apiHistory.add(ChatMessage("assistant", reply))
             }.onFailure { error ->
