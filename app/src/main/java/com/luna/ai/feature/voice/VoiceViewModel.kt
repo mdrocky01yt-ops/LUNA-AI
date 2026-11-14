@@ -85,7 +85,7 @@ class VoiceViewModel @Inject constructor(
         apiHistory.add(ChatMessage("user", text))
 
         viewModelScope.launch {
-            // এখানে "Gemini" পাস করা হলো
+            // এখানে "Gemini" করা হলো
             val result = repository.sendMessage(apiHistory, "Gemini")
             
             result.onSuccess { reply ->
