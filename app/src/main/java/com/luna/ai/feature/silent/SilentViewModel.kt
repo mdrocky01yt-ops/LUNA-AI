@@ -18,7 +18,7 @@ class SilentViewModel @Inject constructor(
     private val actionParser: ActionParser
 ) : ViewModel() {
 
-    private val _messages = MutableStateFlow<List<Pair<String, Boolean>>>(emptyList()) // True = User, False = Luna
+    private val _messages = MutableStateFlow<List<Pair<String, Boolean>>>(emptyList())
     val messages: StateFlow<List<Pair<String, Boolean>>> = _messages
 
     private val _isLoading = MutableStateFlow(false)
@@ -35,26 +35,23 @@ class SilentViewModel @Inject constructor(
     fun sendCommand(userText: String) {
         if (userText.isBlank()) return
 
-        // ইউজারের মেসেজ যোগ করা
         _messages.value = _messages.value + (userText to true)
-        
-        // হিস্ট্রিতে যোগ করা
         apiHistory.add(ChatMessage("user", userText))
         _isLoading.value = true
 
         viewModelScope.launch {
-            val result = repository.sendDeepSeekMessage(apiHistory)
+            val result = repository.sendMessage(apiHistory)
             
             _isLoading.value = false
             
             result.onSuccess { reply ->
                 var finalReply = reply
                 
-                // অ্যাকশন চেক করা
                 if (reply.contains("ACTION:")) {
                     val actionExecuted = actionParser.executeAction(reply)
-                    if (actionExecuted) {
-                        finalReply = "✅ কাজটি সম্পন্ন করা হয়েছে।"
+                    // এখানে Boolean এর বদলে String? চেক করা হচ্ছে
+                    if (actionExecuted != null) {
+                        finalReply = "✅ $actionExecuted"
                     } else {
                         finalReply = "❌ দুঃখিত, আমি কাজটি করতে পারিনি।"
                     }
