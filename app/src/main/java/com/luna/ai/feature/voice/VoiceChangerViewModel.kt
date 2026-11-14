@@ -3,6 +3,7 @@ package com.luna.ai.feature.voice
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.luna.ai.core.datastore.DataStoreManager
+import com.luna.ai.voice.VoiceProfile
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
