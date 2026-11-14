@@ -1,93 +1,113 @@
-package com.luna.ai.feature.chat
+package com.luna.ai.feature.voice
 
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.luna.ai.ai.model.ChatMessage
 import com.luna.ai.ai.repository.AiRepository
-import com.luna.ai.core.database.ChatDao
 import com.luna.ai.core.datastore.DataStoreManager
 import com.luna.ai.core.device.ActionParser
-import com.luna.ai.core.model.Message
+import com.luna.ai.voice.VoiceManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class ChatViewModel @Inject constructor(
+class VoiceViewModel @Inject constructor(
+    application: Application,
     private val repository: AiRepository,
-    private val chatDao: ChatDao,
     private val actionParser: ActionParser,
     private val dataStoreManager: DataStoreManager
-) : ViewModel() {
+) : AndroidViewModel(application) {
 
-    val messages: StateFlow<List<Message>> = chatDao.getAllMessages()
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = emptyList()
-        )
+    private val voiceManager = VoiceManager(application)
 
-    private val _isLoading = MutableStateFlow(false)
-    val isLoading: StateFlow<Boolean> = _isLoading
+    val isListening = voiceManager.isListening
+    val isSpeaking = voiceManager.isSpeaking
+
+    private val _userQuery = MutableStateFlow("")
+    val userQuery: StateFlow<String> = _userQuery
+
+    private val _lunaResponse = MutableStateFlow("I am ready. Speak now...")
+    val lunaResponse: StateFlow<String> = _lunaResponse
 
     private val apiHistory = mutableListOf<ChatMessage>()
 
     init {
         viewModelScope.launch {
+            val pitch = dataStoreManager.voicePitchFlow.first()
+            val speed = dataStoreManager.voiceSpeedFlow.first()
+            val name = dataStoreManager.voiceNameFlow.first()
+            voiceManager.updateVoiceParameters(pitch, speed, name)
+
             val personality = dataStoreManager.aiPersonalityFlow.first()
-            val systemPrompt = "$personality\n\nIMPORTANT: You can control the Android phone using Accessibility Service.\nIf user asks to do something on phone, reply EXACTLY like: ACTION:OPEN_APP:package.name OR ACTION:READ_SCREEN OR ACTION:CLICK_TEXT:text OR ACTION:SCROLL_DOWN OR ACTION:BACK OR ACTION:FLASHLIGHT OR ACTION:BATTERY"
+            val systemPrompt = "$personality\n\nIMPORTANT: Keep answers short. You can control the phone.\nIf user asks to do something, reply EXACTLY like: ACTION:OPEN_APP:package.name OR ACTION:READ_SCREEN OR ACTION:CLICK_TEXT:text OR ACTION:SCROLL_DOWN OR ACTION:BACK OR ACTION:FLASHLIGHT OR ACTION:BATTERY"
             apiHistory.add(ChatMessage("system", systemPrompt))
         }
+
+        voiceManager.onTtsFinished = {
+            startListening()
+        }
+
+        startListening()
     }
 
-    fun sendMessage(userText: String) {
-        if (userText.isBlank()) return
+    fun startListening() {
+        if (voiceManager.isSpeaking.value) return
+        
+        _lunaResponse.value = "Listening..."
+        _userQuery.value = ""
+        
+        voiceManager.startListening(
+            onResult = { text ->
+                if (text.isNotBlank()) {
+                    _userQuery.value = text
+                    processQuery(text)
+                }
+            },
+            onEnd = {
+                if (_lunaResponse.value == "Listening...") {
+                    _lunaResponse.value = "Waiting for you to speak..."
+                }
+            }
+        )
+    }
+
+    fun stopListening() {
+        voiceManager.stopListening()
+    }
+
+    private fun processQuery(text: String) {
+        _lunaResponse.value = "Thinking..."
+        apiHistory.add(ChatMessage("user", text))
 
         viewModelScope.launch {
-            val userMsg = Message(text = userText, isFromUser = true)
-            chatDao.insertMessage(userMsg)
-
-            apiHistory.add(ChatMessage("user", userText))
-            _isLoading.value = true
-
             val result = repository.sendMessage(apiHistory)
-            
-            _isLoading.value = false
             
             result.onSuccess { reply ->
                 var finalReply = reply
-                
+
                 if (reply.contains("ACTION:")) {
                     val actionResult = actionParser.executeAction(reply)
-                    finalReply = if (actionResult != null) {
-                        "✅ $actionResult"
-                    } else {
-                        "❌ দুঃখিত, কাজটি করা সম্ভব হয়নি।"
-                    }
+                    finalReply = if (actionResult != null) actionResult else "দুঃখিত, কাজটি করা সম্ভব হয়নি।"
                 }
 
-                val lunaMsg = Message(text = finalReply, isFromUser = false)
-                chatDao.insertMessage(lunaMsg)
+                _lunaResponse.value = finalReply
                 apiHistory.add(ChatMessage("assistant", reply))
+                voiceManager.speak(finalReply)
+                
             }.onFailure { error ->
-                val errorMsg = Message(text = "Error: ${error.message}", isFromUser = false)
-                chatDao.insertMessage(errorMsg)
+                _lunaResponse.value = "Error: ${error.message}"
+                startListening()
             }
         }
     }
 
-    fun clearHistory() {
-        viewModelScope.launch {
-            chatDao.clearHistory()
-            apiHistory.clear()
-            val personality = dataStoreManager.aiPersonalityFlow.first()
-            val systemPrompt = "$personality\n\nIMPORTANT: You can control the Android phone using Accessibility Service.\nIf user asks to do something on phone, reply EXACTLY like: ACTION:OPEN_APP:package.name OR ACTION:READ_SCREEN OR ACTION:CLICK_TEXT:text OR ACTION:SCROLL_DOWN OR ACTION:BACK OR ACTION:FLASHLIGHT OR ACTION:BATTERY"
-            apiHistory.add(ChatMessage("system", systemPrompt))
-        }
+    override fun onCleared() {
+        super.onCleared()
+        voiceManager.destroy()
     }
 }
