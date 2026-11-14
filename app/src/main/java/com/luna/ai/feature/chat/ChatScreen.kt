@@ -35,10 +35,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.luna.ai.design.theme.CyanGlow
 import com.luna.ai.design.theme.DeepBlack
 import com.luna.ai.design.theme.ElectricPurple
-import com.luna.ai.design.theme.PremiumWhite
 import com.luna.ai.feature.chat.components.ChatBubble
 import com.luna.ai.feature.chat.components.ChatInput
 
@@ -145,10 +143,10 @@ fun ChatScreen(
                 }
             }
 
-            // ইনপুট এরিয়া
+            // ইনপুট এরিয়া (নতুন প্যারামিটারসহ)
             ChatInput(
-                onSendMessage = { text ->
-                    viewModel.sendMessage(text)
+                onSendMessage = { text, imageUri ->
+                    viewModel.sendMessage(text, imageUri)
                 }
             )
         }
