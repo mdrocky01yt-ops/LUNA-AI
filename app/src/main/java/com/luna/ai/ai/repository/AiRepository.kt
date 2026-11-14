@@ -18,45 +18,37 @@ class AiRepository @Inject constructor(
     private val geminiService: GeminiService,
     private val dataStoreManager: DataStoreManager
 ) {
-    // ১. DeepSeek দিয়ে চ্যাট
-    suspend fun sendDeepSeekMessage(history: List<ChatMessage>): Result<String> {
-        return try {
-            val apiKey = dataStoreManager.deepSeekKeysFlow.first().firstOrNull() ?: ""
-            if (apiKey.isBlank()) {
-                return Result.failure(Exception("DeepSeek API Key সেট করা হয়নি। Menu -> API KEYS-এ যান।"))
-            }
+    suspend fun sendMessage(history: List<ChatMessage>): Result<String> {
+        val deepSeekKeys = dataStoreManager.deepSeekKeysFlow.first()
+        val geminiKeys = dataStoreManager.geminiKeysFlow.first()
 
-            val request = DeepSeekRequest(messages = history)
-            val response = deepSeekService.sendMessage(
-                auth = "Bearer $apiKey",
-                request = request
-            )
-            
-            val reply = response.choices.firstOrNull()?.message?.content ?: "No response."
-            Result.success(reply)
-        } catch (e: Exception) {
-            Result.failure(e)
+        // ১. প্রথমে DeepSeek দিয়ে চেষ্টা করবে
+        for (key in deepSeekKeys) {
+            try {
+                val request = DeepSeekRequest(messages = history)
+                val response = deepSeekService.sendMessage("Bearer $key", request)
+                val reply = response.choices.firstOrNull()?.message?.content
+                if (!reply.isNullOrBlank()) {
+                    return Result.success(reply)
+                }
+            } catch (e: Exception) { }
         }
-    }
 
-    // ২. Gemini দিয়ে চ্যাট
-    suspend fun sendGeminiMessage(prompt: String): Result<String> {
-        return try {
-            val apiKey = dataStoreManager.geminiKeysFlow.first().firstOrNull() ?: ""
-            if (apiKey.isBlank()) {
-                return Result.failure(Exception("Gemini API Key সেট করা হয়নি। Menu -> API KEYS-এ যান।"))
-            }
-
-            val request = GeminiRequest(
-                contents = listOf(GeminiContent(parts = listOf(GeminiPart(text = prompt))))
-            )
-            val response = geminiService.generateContent(apiKey = apiKey, request = request)
-            
-            val reply = response.candidates?.firstOrNull()?.content?.parts?.firstOrNull()?.text 
-                ?: "No response from Gemini."
-            Result.success(reply)
-        } catch (e: Exception) {
-            Result.failure(e)
+        // ২. DeepSeek ফেল করলে Gemini দিয়ে চেষ্টা করবে
+        val lastUserMessage = history.lastOrNull { it.role == "user" }?.content ?: ""
+        for (key in geminiKeys) {
+            try {
+                val request = GeminiRequest(
+                    contents = listOf(GeminiContent(parts = listOf(GeminiPart(text = lastUserMessage))))
+                )
+                val response = geminiService.generateContent(apiKey = key, request = request)
+                val reply = response.candidates?.firstOrNull()?.content?.parts?.firstOrNull()?.text
+                if (!reply.isNullOrBlank()) {
+                    return Result.success(reply)
+                }
+            } catch (e: Exception) { }
         }
+
+        return Result.failure(Exception("সব API Key-এর লিমিট শেষ অথবা ভুল। দয়া করে API KEYS-এ গিয়ে নতুন Key যোগ করুন।"))
     }
 }
