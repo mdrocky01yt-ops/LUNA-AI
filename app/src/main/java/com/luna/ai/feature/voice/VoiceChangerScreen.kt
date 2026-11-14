@@ -3,7 +3,6 @@ package com.luna.ai.feature.voice
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -46,13 +45,6 @@ import com.luna.ai.design.theme.ElectricPurple
 import com.luna.ai.design.theme.PremiumWhite
 import com.luna.ai.voice.VoiceManager
 
-data class VoiceProfile(
-    val name: String,
-    val pitch: Float,
-    val speed: Float,
-    val description: String
-)
-
 @Composable
 fun VoiceChangerScreen(
     onBackClick: () -> Unit = {},
@@ -62,28 +54,14 @@ fun VoiceChangerScreen(
     val savedPitch by viewModel.savedPitch.collectAsState()
     val savedSpeed by viewModel.savedSpeed.collectAsState()
 
-    var selectedVoice by remember { mutableStateOf(VoiceProfile(savedName, savedPitch, savedSpeed, "")) }
+    var selectedVoice by remember { mutableStateOf(savedName) }
     var pitch by remember { mutableStateOf(savedPitch) }
     var speed by remember { mutableStateOf(savedSpeed) }
     
     val context = LocalContext.current
     val voiceManager = remember { VoiceManager(context) }
 
-    // ১২টি আলাদা ভয়েস প্রোফাইল (সিমুলেশন)
-    val voiceProfiles = listOf(
-        VoiceProfile("Luna Default", 1.0f, 1.0f, "Soft & Friendly"),
-        VoiceProfile("Cute Girl", 1.3f, 1.1f, "Playful"),
-        VoiceProfile("Professional", 0.9f, 1.0f, "Confident"),
-        VoiceProfile("Relaxed", 0.95f, 0.9f, "Calm"),
-        VoiceProfile("Energetic", 1.1f, 1.2f, "Excited"),
-        VoiceProfile("Storyteller", 0.9f, 0.95f, "Slow & Clear"),
-        VoiceProfile("Whisper", 0.85f, 0.8f, "Very Soft"),
-        VoiceProfile("Sweet", 1.2f, 1.0f, "Pleasant"),
-        VoiceProfile("Robot", 0.7f, 1.1f, "Mechanical"),
-        VoiceProfile("Deep Voice", 0.6f, 0.9f, "Heavy"),
-        VoiceProfile("Fast Talker", 1.0f, 1.4f, "Speedy"),
-        VoiceProfile("Slow Talker", 1.0f, 0.7f, "Very Slow")
-    )
+    val voiceProfiles = voiceManager.getAvailableVoiceProfiles()
 
     Column(
         modifier = Modifier.fillMaxSize().background(DeepBlack).padding(top = 24.dp)
@@ -105,7 +83,7 @@ fun VoiceChangerScreen(
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             items(voiceProfiles) { profile ->
-                val isSelected = selectedVoice.name == profile.name
+                val isSelected = selectedVoice == profile.name
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -114,7 +92,7 @@ fun VoiceChangerScreen(
                             RoundedCornerShape(12.dp)
                         )
                         .clickable {
-                            selectedVoice = profile
+                            selectedVoice = profile.name
                             pitch = profile.pitch
                             speed = profile.speed
                         }
@@ -129,7 +107,7 @@ fun VoiceChangerScreen(
                     
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         IconButton(onClick = {
-                            voiceManager.updateVoiceParameters(profile.pitch, profile.speed)
+                            voiceManager.updateVoiceParameters(profile.pitch, profile.speed, profile.name)
                             voiceManager.speak("হ্যালো, আমি লুনা। আমি আপনার সাথে কথা বলতে প্রস্তুত।")
                         }) {
                             Icon(Icons.Default.PlayArrow, contentDescription = "Preview", tint = CyanGlow)
@@ -165,7 +143,7 @@ fun VoiceChangerScreen(
 
         Button(
             onClick = {
-                viewModel.saveVoiceSettings(selectedVoice.name, pitch, speed)
+                viewModel.saveVoiceSettings(selectedVoice, pitch, speed)
                 onBackClick()
             },
             modifier = Modifier.fillMaxWidth().padding(16.dp).height(50.dp),
