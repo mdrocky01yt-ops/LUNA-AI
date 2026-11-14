@@ -31,36 +31,51 @@ class VoiceViewModel @Inject constructor(
     private val _userQuery = MutableStateFlow("")
     val userQuery: StateFlow<String> = _userQuery
 
-    private val _lunaResponse = MutableStateFlow("Tap the mic to start speaking...")
+    private val _lunaResponse = MutableStateFlow("I am ready. Speak now...")
     val lunaResponse: StateFlow<String> = _lunaResponse
 
     private val apiHistory = mutableListOf<ChatMessage>()
 
     init {
         viewModelScope.launch {
+            // ভয়েস সেটিংস লোড
             val pitch = dataStoreManager.voicePitchFlow.first()
             val speed = dataStoreManager.voiceSpeedFlow.first()
-            voiceManager.updateVoiceParameters(pitch, speed)
+            val name = dataStoreManager.voiceNameFlow.first()
+            voiceManager.updateVoiceParameters(pitch, speed, name)
 
+            // পার্সোনালিটি লোড
             val personality = dataStoreManager.aiPersonalityFlow.first()
             val systemPrompt = "$personality\n\nIMPORTANT: Keep answers short. You can control the phone.\nIf user asks to do something, reply EXACTLY like: ACTION:OPEN_APP:package.name OR ACTION:READ_SCREEN OR ACTION:CLICK_TEXT:text OR ACTION:SCROLL_DOWN OR ACTION:BACK OR ACTION:FLASHLIGHT OR ACTION:BATTERY"
             apiHistory.add(ChatMessage("system", systemPrompt))
         }
+
+        // TTS শেষ হলে আবার মাইক চালু হবে (লুপ সিস্টেম)
+        voiceManager.onTtsFinished = {
+            startListening()
+        }
+
+        // অ্যাপ ওপেন হওয়া মাত্রই মাইক চালু হবে
+        startListening()
     }
 
     fun startListening() {
-        voiceManager.stopSpeaking()
-        _userQuery.value = ""
+        if (voiceManager.isSpeaking.value) return
+        
         _lunaResponse.value = "Listening..."
+        _userQuery.value = ""
         
         voiceManager.startListening(
             onResult = { text ->
-                _userQuery.value = text
-                processQuery(text)
+                if (text.isNotBlank()) {
+                    _userQuery.value = text
+                    processQuery(text)
+                }
             },
             onEnd = {
-                if (_userQuery.value.isEmpty()) {
-                    _lunaResponse.value = "Tap the mic to start speaking..."
+                // যদি কিছু না শোনে, আবার চেষ্টা করবে
+                if (_lunaResponse.value == "Listening...") {
+                    _lunaResponse.value = "Waiting for you to speak..."
                 }
             }
         )
@@ -82,19 +97,17 @@ class VoiceViewModel @Inject constructor(
 
                 if (reply.contains("ACTION:")) {
                     val actionResult = actionParser.executeAction(reply)
-                    finalReply = if (actionResult != null) {
-                        actionResult
-                    } else {
-                        "দুঃখিত, কাজটি করা সম্ভব হয়নি।"
-                    }
+                    finalReply = if (actionResult != null) actionResult else "দুঃখিত, কাজটি করা সম্ভব হয়নি।"
                 }
 
                 _lunaResponse.value = finalReply
                 apiHistory.add(ChatMessage("assistant", reply))
-                voiceManager.speak(finalReply)
+                voiceManager.speak(finalReply) // কথা বলা শেষ হলে onTtsFinished কল হবে
                 
             }.onFailure { error ->
                 _lunaResponse.value = "Error: ${error.message}"
+                // এরর হলেও আবার শোনা শুরু করবে
+                startListening()
             }
         }
     }
