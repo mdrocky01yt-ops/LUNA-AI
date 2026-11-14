@@ -2,6 +2,7 @@ package com.luna.ai.core.device
 
 import android.content.Context
 import com.luna.ai.service.LunaAccessibilityService
+import com.luna.ai.service.LunaNotificationListener
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -31,20 +32,35 @@ class ActionParser @Inject constructor(
             return "আপনার ব্যাটারি: ${deviceController.getBatteryLevel()}%"
         }
 
-        // ৪. স্ক্রিন রিডিং
+        // ৪. ব্রাইটনেস
+        if (aiResponse.contains("ACTION:BRIGHTNESS_UP")) {
+            deviceController.changeBrightness(true)
+            return "ব্রাইটনেস বাড়ানো হয়েছে।"
+        }
+        if (aiResponse.contains("ACTION:BRIGHTNESS_DOWN")) {
+            deviceController.changeBrightness(false)
+            return "ব্রাইটনেস কমানো হয়েছে।"
+        }
+
+        // ৫. নোটিফিকেশন পড়া
+        if (aiResponse.contains("ACTION:READ_NOTIFICATIONS")) {
+            return "সর্বশেষ নোটিফিকেশন: ${LunaNotificationListener.latestNotificationText}"
+        }
+
+        // ৬. স্ক্রিন রিডিং
         if (aiResponse.contains("ACTION:READ_SCREEN")) {
             val screenText = LunaAccessibilityService.instance?.getScreenText() ?: "অ্যাক্সেসিবিলিটি পারমিশন দেওয়া নেই।"
             return "স্ক্রিনে লেখা আছে:\n$screenText"
         }
 
-        // ৫. টেক্সট ক্লিক
+        // ৭. টেক্সট ক্লিক
         if (aiResponse.contains("ACTION:CLICK_TEXT:")) {
             val textToClick = aiResponse.substringAfter("ACTION:CLICK_TEXT:").substringBefore("ACTION").trim()
             val success = LunaAccessibilityService.instance?.clickByText(textToClick) ?: false
             return if (success) "$textToClick-তে ক্লিক করা হয়েছে।" else "ক্লিক করা সম্ভব হয়নি।"
         }
 
-        // ৬. স্ক্রল
+        // ৮. স্ক্রল
         if (aiResponse.contains("ACTION:SCROLL_DOWN")) {
             LunaAccessibilityService.instance?.scrollScreen(true)
             return "স্ক্রল ডাউন করা হয়েছে।"
@@ -54,7 +70,7 @@ class ActionParser @Inject constructor(
             return "স্ক্রল আপ করা হয়েছে।"
         }
 
-        // ৭. ব্যাক
+        // ৯. ব্যাক
         if (aiResponse.contains("ACTION:BACK")) {
             LunaAccessibilityService.instance?.performGlobalBack()
             return "ব্যাক করা হয়েছে।"
