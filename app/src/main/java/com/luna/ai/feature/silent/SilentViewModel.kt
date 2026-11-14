@@ -40,8 +40,8 @@ class SilentViewModel @Inject constructor(
         _isLoading.value = true
 
         viewModelScope.launch {
-            // এখানে "DeepSeek" পাস করা হলো
-            val result = repository.sendMessage(apiHistory, "DeepSeek")
+            // এখানে "Gemini" করা হলো
+            val result = repository.sendMessage(apiHistory, "Gemini")
             
             _isLoading.value = false
             
