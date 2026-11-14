@@ -5,6 +5,7 @@ import android.content.Intent
 import android.hardware.camera2.CameraManager
 import android.media.AudioManager
 import android.os.BatteryManager
+import android.provider.Settings
 import android.widget.Toast
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
@@ -49,6 +50,31 @@ class DeviceController @Inject constructor(
         } else {
             showToast("App not found on this phone.")
             false
+        }
+    }
+
+    // নতুন: ব্রাইটনেস কন্ট্রোল
+    fun changeBrightness(increase: Boolean) {
+        try {
+            val currentBrightness = Settings.System.getInt(
+                context.contentResolver,
+                Settings.System.SCREEN_BRIGHTNESS
+            )
+            // 0 থেকে 255 এর মধ্যে ব্রাইটনেস অ্যাডজাস্ট করা
+            val newBrightness = if (increase) {
+                (currentBrightness + 50).coerceAtMost(255)
+            } else {
+                (currentBrightness - 50).coerceAtLeast(10)
+            }
+            
+            Settings.System.putInt(
+                context.contentResolver,
+                Settings.System.SCREEN_BRIGHTNESS,
+                newBrightness
+            )
+            showToast(if (increase) "Brightness Increased" else "Brightness Decreased")
+        } catch (e: Exception) {
+            showToast("Cannot change brightness automatically. Needs WRITE_SETTINGS permission.")
         }
     }
 
