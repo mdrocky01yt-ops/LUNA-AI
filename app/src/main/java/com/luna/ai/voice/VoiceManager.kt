@@ -12,6 +12,14 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import java.util.Locale
 
+// ক্লাসটি ফাইলের একদম উপরে ডিক্লেয়ার করা হলো
+data class VoiceProfile(
+    val name: String,
+    val pitch: Float,
+    val speed: Float,
+    val description: String
+)
+
 class VoiceManager(private val context: Context) {
 
     private var speechRecognizer: SpeechRecognizer? = null
