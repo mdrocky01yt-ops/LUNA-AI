@@ -16,7 +16,7 @@ class AiRepository @Inject constructor(
     private val geminiService: GeminiService,
     private val dataStoreManager: DataStoreManager
 ) {
-    // এখানে provider প্যারামিটার নেই, শুধু history আর imageBase64
+    // এখানে শুধু history আর imageBase64 আছে
     suspend fun sendMessage(
         history: List<ChatMessage>, 
         imageBase64: String? = null 
