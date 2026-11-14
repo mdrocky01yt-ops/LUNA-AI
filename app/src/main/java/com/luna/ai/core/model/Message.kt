@@ -8,5 +8,6 @@ data class Message(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val text: String,
     val isFromUser: Boolean,
-    val timestamp: Long = System.currentTimeMillis()
+    val timestamp: Long = System.currentTimeMillis(),
+    val imageUrl: String? = null // নতুন যুক্ত হলো
 )
