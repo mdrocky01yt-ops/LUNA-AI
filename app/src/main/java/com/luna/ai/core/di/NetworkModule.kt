@@ -1,3 +1,4 @@
+
 package com.luna.ai.core.di
 
 import com.luna.ai.ai.network.GeminiService
@@ -20,9 +21,12 @@ object NetworkModule {
     @Provides
     @Singleton
     fun provideOkHttpClient(): OkHttpClient {
+
         val logging = HttpLoggingInterceptor().apply {
-            level = HttpLoggingInterceptor.Level.BODY
+            redactHeader("x-goog-api-key")
+            level = HttpLoggingInterceptor.Level.BASIC
         }
+
         return OkHttpClient.Builder()
             .addInterceptor(logging)
             .connectTimeout(60, TimeUnit.SECONDS)
@@ -33,7 +37,10 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun provideGeminiService(okHttpClient: OkHttpClient): GeminiService {
+    fun provideGeminiService(
+        okHttpClient: OkHttpClient
+    ): GeminiService {
+
         return Retrofit.Builder()
             .baseUrl("https://generativelanguage.googleapis.com/")
             .client(okHttpClient)
@@ -44,7 +51,10 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun provideNewsService(okHttpClient: OkHttpClient): NewsService {
+    fun provideNewsService(
+        okHttpClient: OkHttpClient
+    ): NewsService {
+
         return Retrofit.Builder()
             .baseUrl("https://saurav.tech/NewsAPI/")
             .client(okHttpClient)
