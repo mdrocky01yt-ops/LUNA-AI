@@ -1,3 +1,4 @@
+
 package com.luna.ai.service
 
 import android.content.Intent
@@ -51,7 +52,11 @@ import androidx.lifecycle.lifecycleScope
 import com.luna.ai.MainActivity
 import com.luna.ai.ai.model.ChatMessage
 import com.luna.ai.ai.repository.AiRepository
+import com.luna.ai.core.database.ChatDao
 import com.luna.ai.core.datastore.DataStoreManager
+import com.luna.ai.core.device.ActionParser
+import com.luna.ai.core.model.Message
+import com.luna.ai.core.utils.PromptHelper
 import com.luna.ai.design.theme.CyanGlow
 import com.luna.ai.design.theme.ElectricPurple
 import com.luna.ai.design.theme.PremiumWhite
@@ -69,13 +74,22 @@ class FloatingBubbleService : LifecycleService() {
     @Inject
     lateinit var dataStoreManager: DataStoreManager
 
+    @Inject
+    lateinit var chatDao: ChatDao
+
+    @Inject
+    lateinit var actionParser: ActionParser
+
     private lateinit var windowManager: WindowManager
     private lateinit var floatingView: ComposeView
     private lateinit var params: WindowManager.LayoutParams
 
     override fun onCreate() {
         super.onCreate()
-        windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
+
+        windowManager =
+            getSystemService(WINDOW_SERVICE) as WindowManager
+
         createFloatingBubble()
     }
 
@@ -100,81 +114,193 @@ class FloatingBubbleService : LifecycleService() {
 
                 Box(contentAlignment = Alignment.Center) {
                     if (showMiniChat) {
-                        // মিনি চ্যাট UI
                         MiniChatView(
-                            onClose = { showMiniChat = false },
+                            onClose = {
+                                showMiniChat = false
+                            },
                             onSendMessage = { text, onResult ->
                                 lifecycleScope.launch {
-                                    val history = mutableListOf(
-                                        ChatMessage("system", "You are Luna. Read the screen if asked. Keep answers short."),
-                                        ChatMessage("user", text)
-                                    )
-                                    val result = repository.sendMessage(history, "Gemini")
-                                    result.onSuccess { onResult(it) }
-                                        .onFailure { onResult("Error: ${it.message}") }
+                                    try {
+                                        chatDao.insertMessage(
+                                            Message(
+                                                text = text,
+                                                isFromUser = true
+                                            )
+                                        )
+
+                                        val personality =
+                                            dataStoreManager.aiPersonalityFlow.first()
+
+                                        val history =
+                                            mutableListOf<ChatMessage>()
+
+                                        history.add(
+                                            ChatMessage(
+                                                role = "system",
+                                                content = PromptHelper.getSystemPrompt(
+                                                    personality
+                                                )
+                                            )
+                                        )
+
+                                        val savedMessages =
+                                            chatDao.getAllMessages().first()
+
+                                        savedMessages
+                                            .takeLast(40)
+                                            .filterNot { message ->
+                                                !message.isFromUser &&
+                                                    message.text.startsWith("Error:")
+                                            }
+                                            .forEach { message ->
+                                                history.add(
+                                                    ChatMessage(
+                                                        role = if (message.isFromUser) {
+                                                            "user"
+                                                        } else {
+                                                            "assistant"
+                                                        },
+                                                        content = message.text
+                                                    )
+                                                )
+                                            }
+
+                                        val result =
+                                            repository.sendMessage(history)
+
+                                        result.onSuccess { reply ->
+                                            val finalReply =
+                                                if (reply.contains("ACTION:")) {
+                                                    actionParser.executeAction(reply)
+                                                        ?: "দুঃখিত, কাজটি সম্পন্ন করা যায়নি।"
+                                                } else {
+                                                    reply
+                                                }
+
+                                            chatDao.insertMessage(
+                                                Message(
+                                                    text = finalReply,
+                                                    isFromUser = false
+                                                )
+                                            )
+
+                                            onResult(finalReply)
+                                        }.onFailure { error ->
+                                            onResult(
+                                                "সমস্যা হয়েছে: ${error.message ?: "অজানা সমস্যা"}"
+                                            )
+                                        }
+                                    } catch (error: Exception) {
+                                        onResult(
+                                            "সমস্যা হয়েছে: ${error.message ?: "অজানা সমস্যা"}"
+                                        )
+                                    }
                                 }
                             },
                             onReadScreen = { onResult ->
-                                val screenText = LunaAccessibilityService.instance?.getScreenText() ?: "পারমিশন নেই।"
-                                onResult("স্ক্রিনে লেখা আছে:\n$screenText")
+                                val screenText =
+                                    LunaAccessibilityService.instance
+                                        ?.getScreenText()
+                                        ?: "অ্যাক্সেসিবিলিটি পারমিশন দেওয়া নেই।"
+
+                                onResult(
+                                    "স্ক্রিনে লেখা আছে:\n$screenText"
+                                )
                             }
                         )
                     } else if (isExpanded) {
-                        // মিনি মেনু
                         Row(
                             modifier = Modifier
-                                .background(Color(0xEE1A1A2E), RoundedCornerShape(30.dp))
-                                .padding(horizontal = 16.dp, vertical = 8.dp),
-                            horizontalArrangement = Arrangement.spacedBy(16.dp),
+                                .background(
+                                    Color(0xEE1A1A2E),
+                                    RoundedCornerShape(30.dp)
+                                )
+                                .padding(
+                                    horizontal = 16.dp,
+                                    vertical = 8.dp
+                                ),
+                            horizontalArrangement =
+                                Arrangement.spacedBy(16.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            // মাইক অন/অফ
                             Icon(
-                                imageVector = if (isMuted) Icons.Default.MicOff else Icons.Default.Mic,
+                                imageVector = if (isMuted) {
+                                    Icons.Default.MicOff
+                                } else {
+                                    Icons.Default.Mic
+                                },
                                 contentDescription = "Mute",
-                                tint = if (isMuted) Color.Red else CyanGlow,
-                                modifier = Modifier.size(28.dp).clickable { isMuted = !isMuted }
+                                tint = if (isMuted) {
+                                    Color.Red
+                                } else {
+                                    CyanGlow
+                                },
+                                modifier = Modifier
+                                    .size(28.dp)
+                                    .clickable {
+                                        isMuted = !isMuted
+                                    }
                             )
-                            
-                            // মিনি চ্যাট ওপেন
+
                             Icon(
                                 imageVector = Icons.Default.AutoAwesome,
                                 contentDescription = "Chat",
                                 tint = CyanGlow,
-                                modifier = Modifier.size(28.dp).clickable { showMiniChat = true }
+                                modifier = Modifier
+                                    .size(28.dp)
+                                    .clickable {
+                                        showMiniChat = true
+                                    }
                             )
 
-                            // অ্যাপ ওপেন
                             Icon(
                                 imageVector = Icons.Default.OpenInNew,
                                 contentDescription = "Open App",
                                 tint = PremiumWhite,
-                                modifier = Modifier.size(28.dp).clickable {
-                                    val intent = Intent(this@FloatingBubbleService, MainActivity::class.java)
-                                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                                    startActivity(intent)
-                                    floatingView.visibility = View.GONE
-                                }
+                                modifier = Modifier
+                                    .size(28.dp)
+                                    .clickable {
+                                        val intent = Intent(
+                                            this@FloatingBubbleService,
+                                            MainActivity::class.java
+                                        ).apply {
+                                            addFlags(
+                                                Intent.FLAG_ACTIVITY_NEW_TASK
+                                            )
+                                        }
+
+                                        startActivity(intent)
+                                        floatingView.visibility = View.GONE
+                                    }
                             )
-                            
-                            // বন্ধ করা
+
                             Icon(
                                 imageVector = Icons.Default.Close,
                                 contentDescription = "Close",
                                 tint = Color.Gray,
-                                modifier = Modifier.size(28.dp).clickable { isExpanded = false }
+                                modifier = Modifier
+                                    .size(28.dp)
+                                    .clickable {
+                                        isExpanded = false
+                                    }
                             )
                         }
                     } else {
-                        // মূল বাবল
                         Box(
                             modifier = Modifier
                                 .size(60.dp)
                                 .background(
-                                    brush = Brush.linearGradient(listOf(ElectricPurple, CyanGlow)),
+                                    brush = Brush.linearGradient(
+                                        listOf(
+                                            ElectricPurple,
+                                            CyanGlow
+                                        )
+                                    ),
                                     shape = CircleShape
                                 )
-                                .clickable { isExpanded = true },
+                                .clickable {
+                                    isExpanded = true
+                                },
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
@@ -187,30 +313,47 @@ class FloatingBubbleService : LifecycleService() {
                     }
                 }
             }
-            
-            // বাবল ড্র্যাগ করার ব্যবস্থা
+
             setOnTouchListener(object : View.OnTouchListener {
+
                 private var initialX = 0
                 private var initialY = 0
                 private var initialTouchX = 0f
                 private var initialTouchY = 0f
 
-                override fun onTouch(v: View, event: MotionEvent): Boolean {
+                override fun onTouch(
+                    view: View,
+                    event: MotionEvent
+                ): Boolean {
                     when (event.action) {
                         MotionEvent.ACTION_DOWN -> {
                             initialX = params.x
                             initialY = params.y
                             initialTouchX = event.rawX
                             initialTouchY = event.rawY
-                            return false 
+                            return false
                         }
+
                         MotionEvent.ACTION_MOVE -> {
-                            params.x = initialX + (initialTouchX - event.rawX).toInt()
-                            params.y = initialY + (initialTouchY - event.rawY).toInt()
-                            windowManager.updateViewLayout(floatingView, params)
+                            params.x =
+                                initialX +
+                                    (initialTouchX - event.rawX).toInt()
+
+                            params.y =
+                                initialY +
+                                    (initialTouchY - event.rawY).toInt()
+
+                            if (floatingView.isAttachedToWindow) {
+                                windowManager.updateViewLayout(
+                                    floatingView,
+                                    params
+                                )
+                            }
+
                             return true
                         }
                     }
+
                     return false
                 }
             })
@@ -220,10 +363,13 @@ class FloatingBubbleService : LifecycleService() {
     }
 
     override fun onDestroy() {
-        super.onDestroy()
-        if (::floatingView.isInitialized) {
+        if (::floatingView.isInitialized &&
+            floatingView.isAttachedToWindow
+        ) {
             windowManager.removeView(floatingView)
         }
+
+        super.onDestroy()
     }
 
     override fun onBind(intent: Intent): IBinder? {
@@ -239,38 +385,58 @@ fun MiniChatView(
     onReadScreen: ((String) -> Unit) -> Unit
 ) {
     var inputText by remember { mutableStateOf("") }
-    var responseText by remember { mutableStateOf("আমি এখানে আছি। কিছু জিজ্ঞেস করুন বা স্ক্রিন পড়তে বলুন।") }
+
+    var responseText by remember {
+        mutableStateOf(
+            "আমি এখানে আছি। কিছু জিজ্ঞেস করুন বা স্ক্রিন পড়তে বলুন।"
+        )
+    }
+
     var isLoading by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
             .width(280.dp)
-            .background(Color(0xEE1A1A2E), RoundedCornerShape(16.dp))
+            .background(
+                Color(0xEE1A1A2E),
+                RoundedCornerShape(16.dp)
+            )
             .padding(16.dp)
     ) {
-        // টপ বার
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("Luna Mini-Chat", color = CyanGlow, fontWeight = FontWeight.Bold)
+            Text(
+                "Luna Mini-Chat",
+                color = CyanGlow,
+                fontWeight = FontWeight.Bold
+            )
+
             Icon(
                 imageVector = Icons.Default.Close,
                 contentDescription = "Close",
                 tint = Color.Gray,
-                modifier = Modifier.size(20.dp).clickable { onClose() }
+                modifier = Modifier
+                    .size(20.dp)
+                    .clickable {
+                        onClose()
+                    }
             )
         }
-        
-        // স্ক্রিন রিড বাটন
+
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(vertical = 8.dp)
-                .background(Color(0xFF0A0A10), RoundedCornerShape(8.dp))
+                .background(
+                    Color(0xFF0A0A10),
+                    RoundedCornerShape(8.dp)
+                )
                 .clickable {
                     isLoading = true
+
                     onReadScreen { result ->
                         responseText = result
                         isLoading = false
@@ -279,32 +445,56 @@ fun MiniChatView(
                 .padding(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(Icons.Default.Visibility, contentDescription = "Read Screen", tint = PremiumWhite, modifier = Modifier.size(16.dp))
-            Text(" স্ক্রিন পড়ে বুঝিয়ে দাও", color = PremiumWhite, fontSize = 12.sp, modifier = Modifier.padding(start = 8.dp))
+            Icon(
+                Icons.Default.Visibility,
+                contentDescription = "Read Screen",
+                tint = PremiumWhite,
+                modifier = Modifier.size(16.dp)
+            )
+
+            Text(
+                " স্ক্রিন পড়ে বুঝিয়ে দাও",
+                color = PremiumWhite,
+                fontSize = 12.sp,
+                modifier = Modifier.padding(start = 8.dp)
+            )
         }
 
-        // রেসপন্স
         Text(
             text = responseText,
             color = Color.LightGray,
             fontSize = 13.sp,
-            modifier = Modifier.padding(vertical = 8.dp).height(80.dp)
+            modifier = Modifier
+                .padding(vertical = 8.dp)
+                .height(80.dp)
         )
-        
+
         if (isLoading) {
-            CircularProgressIndicator(color = CyanGlow, modifier = Modifier.size(20.dp))
+            CircularProgressIndicator(
+                color = CyanGlow,
+                modifier = Modifier.size(20.dp)
+            )
         }
 
-        // ইনপুট
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
             TextField(
                 value = inputText,
-                onValueChange = { inputText = it },
-                placeholder = { Text("Ask...", fontSize = 12.sp, color = Color.Gray) },
-                modifier = Modifier.weight(1f).height(45.dp),
+                onValueChange = {
+                    inputText = it
+                },
+                placeholder = {
+                    Text(
+                        "Ask...",
+                        fontSize = 12.sp,
+                        color = Color.Gray
+                    )
+                },
+                modifier = Modifier
+                    .weight(1f)
+                    .height(45.dp),
                 colors = TextFieldDefaults.colors(
                     focusedContainerColor = Color(0xFF0A0A10),
                     unfocusedContainerColor = Color(0xFF0A0A10),
@@ -315,21 +505,27 @@ fun MiniChatView(
                 ),
                 shape = RoundedCornerShape(8.dp)
             )
+
             Icon(
                 imageVector = Icons.Default.Send,
                 contentDescription = "Send",
                 tint = CyanGlow,
-                modifier = Modifier.size(28.dp).padding(start = 8.dp).clickable {
-                    if (inputText.isNotBlank()) {
-                        isLoading = true
-                        val textToSend = inputText
-                        inputText = ""
-                        onSendMessage(textToSend) { result ->
-                            responseText = result
-                            isLoading = false
+                modifier = Modifier
+                    .size(28.dp)
+                    .padding(start = 8.dp)
+                    .clickable {
+                        if (inputText.isNotBlank() && !isLoading) {
+                            isLoading = true
+
+                            val textToSend = inputText.trim()
+                            inputText = ""
+
+                            onSendMessage(textToSend) { result ->
+                                responseText = result
+                                isLoading = false
+                            }
                         }
                     }
-                }
             )
         }
     }
